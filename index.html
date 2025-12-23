@@ -84,11 +84,9 @@
     </main>
     
     <!-- CARGAR EN ESTE ORDEN: -->
-    <!-- 1. Supabase SDK -->
+    <!-- ORDEN CORRECTO: -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 2. Configuración -->
-    <script src="js/config.js"></script>
-    <!-- 3. Lógica pública -->
-    <script src="js/public.js"></script>
+    <script src="js/config.js"></script>  <!-- Aquí se crea window.supabase -->
+    <script src="js/admin.js"></script>   <!-- Aquí SOLO usa window.supabase -->
 </body>
 </html>
