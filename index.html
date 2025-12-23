@@ -4,36 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ciela - Tienda, estilo y corazón</title>
-    <link rel="stylesheet" href="css/styles.css">
     <style>
-        /* Estilos básicos si no tienes CSS */
+        /* Estilos básicos */
         body { font-family: Arial, sans-serif; margin: 20px; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
-        .product-card { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
-        .product-card img { max-width: 100%; height: 200px; object-fit: cover; }
-        .price { font-weight: bold; color: #2ecc71; }
-        .stock { color: #7f8c8d; }
-        button { background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
-        button:disabled { background: #95a5a6; cursor: not-allowed; }
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin-top: 20px;
+        }
+        .product-card { 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .product-card img { 
+            width: 100%; 
+            height: 200px; 
+            object-fit: cover; 
+            border-radius: 4px;
+        }
+        .product-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+        .price { 
+            font-weight: bold; 
+            color: #2ecc71; 
+            font-size: 1.2em;
+        }
+        .stock { 
+            color: #7f8c8d; 
+            font-size: 0.9em;
+        }
+        button { 
+            background: #3498db; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            width: 100%;
+            font-size: 1em;
+        }
+        button:hover { background: #2980b9; }
+        button:disabled { 
+            background: #95a5a6; 
+            cursor: not-allowed;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .admin-link {
+            background: #9b59b6;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <header>
-        <h1>Ciela - Tienda, estilo y corazón</h1>
-        <a href="admin.html" style="float:right; background:#9b59b6; color:white; padding:8px 16px; text-decoration:none; border-radius:4px;">
-            Panel Admin
-        </a>
+        <h1>✨ Ciela - Tienda, estilo y corazón</h1>
+        <a href="admin.html" class="admin-link">🔐 Panel Admin</a>
     </header>
     
-    <div id="catalogo" class="product-grid">
-        <p>Cargando productos...</p>
-    </div>
+    <main>
+        <h2>Nuestro Catálogo</h2>
+        <div id="catalogo" class="product-grid">
+            <p>Cargando productos...</p>
+        </div>
+    </main>
     
-    <!-- Cargar Supabase UNA VEZ -->
+    <!-- CARGAR EN ESTE ORDEN: -->
+    <!-- 1. Supabase SDK -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- Configuración -->
+    <!-- 2. Configuración -->
     <script src="js/config.js"></script>
-    <!-- Lógica pública -->
+    <!-- 3. Lógica pública -->
     <script src="js/public.js"></script>
 </body>
 </html>
