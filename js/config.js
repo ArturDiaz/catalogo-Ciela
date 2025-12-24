@@ -1,8 +1,8 @@
 // js/config.js - VERSIÓN MEJORADA
 (function() {
     // DATOS DE SUPABASE - REEMPLAZA CON LOS TUYOS
-    const SUPABASE_URL = 'https://Ciela-Tienda.supabase.co';  // <-- REEMPLAZA
-    const SUPABASE_KEY = 'xkzxforgasbdamgtarcz';  // <-- REEMPLAZA
+    const SUPABASE_URL = 'https://xkzxforgasbdamgtarcz.supabase.co';  // <-- REEMPLAZA
+    const SUPABASE_KEY = 'sb_publishable_CJ5yPSBEGz7wgeSmChIWoA_aEMdNOlg';  // <-- REEMPLAZA
     
     // Verificar que supabase.js está cargado
     if (typeof window.supabase === 'undefined') {
