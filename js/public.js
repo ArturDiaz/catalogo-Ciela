@@ -1,42 +1,45 @@
-// js/public.js
+// js/public.js - VERSIÓN MEJORADA
 async function initPublic() {
-    await waitForSupabase();
+    console.log('🚀 Iniciando catálogo...');
+    
+    // Intentar conexión inmediata
+    await testConexionSupabase();
     await cargarProductos();
 }
 
-function waitForSupabase() {
+async function testConexionSupabase() {
     return new Promise((resolve) => {
-        const checkInterval = setInterval(() => {
+        let attempts = 0;
+        const maxAttempts = 30; // 3 segundos
+        
+        const check = setInterval(() => {
+            attempts++;
+            
             if (window.supabaseClient) {
-                clearInterval(checkInterval);
-                console.log('✅ Supabase listo en public.js');
+                clearInterval(check);
+                console.log('✅ Supabase listo (intento ' + attempts + ')');
+                
+                // Test rápido de conexión
+                window.supabaseClient.from('productos').select('count', { 
+                    count: 'exact', 
+                    head: true 
+                }).then(({ error }) => {
+                    if (error) {
+                        console.error('❌ Error de conexión:', error.message);
+                    } else {
+                        console.log('✅ Conexión exitosa con Supabase');
+                    }
+                });
+                
+                resolve();
+            }
+            
+            if (attempts >= maxAttempts) {
+                clearInterval(check);
+                console.error('❌ Timeout: SupabaseClient no disponible');
+                alert('Error: No se puede conectar con la base de datos');
                 resolve();
             }
         }, 100);
-        
-        setTimeout(() => {
-            clearInterval(checkInterval);
-            console.error('❌ Timeout esperando supabase');
-            resolve();
-        }, 5000);
     });
 }
-
-async function cargarProductos() {
-    try {
-        const { data: productos, error } = await window.supabaseClient
-            .from('productos')
-            .select('*')
-            .eq('activo', true)
-            .gt('stock', 0);
-        
-        if (error) throw error;
-        
-        // ... resto del código igual
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-
-// Iniciar
-document.addEventListener('DOMContentLoaded', initPublic);
