@@ -9,82 +9,108 @@
 <body>
     <!-- FORMULARIO LOGIN -->
     <div id="login-form">
-        <h2>🔐 Acceso Administrador</h2>
-        <p>Ingresa tus credenciales:</p>
-        
-        <input type="email" id="email" placeholder="Email" value="admin@tutienda.com">
-        <input type="password" id="password" placeholder="Contraseña">
-        
-        <button onclick="login()">Ingresar al Panel</button>
-        
-        <div class="info-note">
-            <strong>📝 Nota:</strong> Si no tienes una cuenta, crea un usuario desde la consola JavaScript:
-            <code style="display:block; margin-top:5px; background:#fff; padding:5px; border-radius:3px;">
-                await window.supabaseClient.auth.signUp({email:'admin@tutienda.com', password:'tu_password'})
-            </code>
+        <div class="login-container">
+            <h2>🔐 Acceso Administrador</h2>
+            <p>Ingresa tus credenciales:</p>
+            
+            <input type="email" id="email" placeholder="Email" value="admin@tutienda.com">
+            <input type="password" id="password" placeholder="Contraseña">
+            
+            <button onclick="login()">Ingresar al Panel</button>
         </div>
     </div>
     
-    <!-- PANEL ADMIN (oculto inicialmente) -->
-    <div id="admin-panel" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <!-- PANEL ADMIN -->
+    <div id="admin-panel">
+        <header class="admin-header">
             <h1>🛠️ Panel de Control - Ciela</h1>
             <button onclick="logout()" class="logout-btn">🚪 Cerrar Sesión</button>
-        </div>
+        </header>
         
-        <!-- SECCIÓN AGREGAR PRODUCTO -->
-        <section>
-            <h2>➕ Agregar Nuevo Producto</h2>
+        <main class="admin-main">
+            <!-- SECCIÓN AGREGAR PRODUCTO -->
+            <section class="add-product">
+                <h2>➕ Agregar Nuevo Producto</h2>
+                
+                <input type="text" id="nombre" placeholder="Nombre del producto *" required>
+                <textarea id="descripcion" placeholder="Descripción detallada"></textarea>
+                
+                <div class="form-row">
+                    <input type="number" id="precio" placeholder="Precio *" step="0.01" min="0.01" required>
+                    <div class="stock-input">
+                        <button type="button" class="stock-btn minus" onclick="ajustarStock('stock', -1)">-</button>
+                        <input type="number" id="stock" value="0" min="0" placeholder="Stock *" required>
+                        <button type="button" class="stock-btn plus" onclick="ajustarStock('stock', 1)">+</button>
+                    </div>
+                </div>
+                
+                <div class="image-upload">
+                    <label for="imagen" class="upload-label">
+                        📁 Subir imagen (desde galería)
+                    </label>
+                    <input type="file" id="imagen" accept="image/*" capture="environment">
+                    <div id="preview-imagen" class="image-preview"></div>
+                </div>
+                
+                <button onclick="agregarProducto()" class="btn-primary">Agregar Producto</button>
+            </section>
             
-            <input type="text" id="nombre" placeholder="Nombre del producto *" required>
-            <textarea id="descripcion" placeholder="Descripción detallada"></textarea>
-            <input type="number" id="precio" placeholder="Precio *" step="0.01" min="0.01" required>
-            <input type="number" id="stock" placeholder="Stock inicial *" min="0" required>
-            
-            <div class="file-input-container">
-                <label for="imagen" style="cursor:pointer;">
-                    📁 Subir imagen (opcional - JPEG, PNG, max 5MB)
-                </label>
-                <input type="file" id="imagen" accept="image/*" style="display:none;">
-                <div id="nombre-archivo" style="margin-top:5px; font-size:0.9em; color:#666;"></div>
-            </div>
-            
-            <div class="info-note">
-                <strong>💡 Pro tip:</strong> Por ahora el sistema no sube imágenes reales. 
-                Puedes usar URLs de servicios como <a href="https://imgbb.com/" target="_blank">ImgBB</a> o 
-                <a href="https://cloudinary.com/" target="_blank">Cloudinary</a> para pruebas.
-            </div>
-            
-            <button onclick="agregarProducto()">Agregar Producto</button>
-        </section>
-        
-        <!-- SECCIÓN PRODUCTOS EXISTENTES -->
-        <section>
-            <h2>📦 Productos Existentes</h2>
-            <div id="lista-productos">
-                <p style="text-align:center; color:#666; padding:20px;">Cargando productos...</p>
-            </div>
-        </section>
+            <!-- SECCIÓN PRODUCTOS EXISTENTES -->
+            <section class="product-list">
+                <div class="list-header">
+                    <h2>📦 Productos Existentes</h2>
+                    
+                    <div class="bulk-actions">
+                        <label class="select-all">
+                            <input type="checkbox" id="select-all" onchange="seleccionarTodos()">
+                            Seleccionar todos
+                        </label>
+                        
+                        <button onclick="desactivarSeleccionados()" class="btn-bulk">
+                            ⏸️ Desactivar seleccionados
+                        </button>
+                        <button onclick="eliminarSeleccionados()" class="btn-bulk delete">
+                            🗑️ Eliminar seleccionados
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="lista-productos" class="products-grid">
+                    <p>Cargando productos...</p>
+                </div>
+            </section>
+        </main>
     </div>
     
-    <!-- CARGAR EN ESTE ORDEN: -->
-    <!-- 1. Supabase SDK -->
+    <!-- SCRIPTS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <!-- 2. Configuración -->
     <script src="js/config.js"></script>
-    <!-- 3. Lógica admin -->
     <script src="js/admin.js"></script>
     
     <script>
-        // Mostrar nombre del archivo seleccionado
-        document.getElementById('imagen').addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name || 'Ningún archivo seleccionado';
-            document.getElementById('nombre-archivo').textContent = `Archivo: ${fileName}`;
-        });
+        // Función auxiliar para ajustar stock
+        window.ajustarStock = function(inputId, cambio) {
+            const input = document.getElementById(inputId);
+            let valor = parseInt(input.value) || 0;
+            valor += cambio;
+            if (valor < 0) valor = 0;
+            input.value = valor;
+        };
         
-        // Permitir hacer clic en el contenedor para seleccionar archivo
-        document.querySelector('.file-input-container').addEventListener('click', function() {
-            document.getElementById('imagen').click();
+        // Vista previa de imagen
+        document.getElementById('imagen').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('preview-imagen');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Vista previa">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = '';
+            }
         });
     </script>
 </body>
