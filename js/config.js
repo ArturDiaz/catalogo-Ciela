@@ -3,10 +3,10 @@
     console.log('🚀 config.js - Conectando a Supabase...');
     
     // ✅ USAR ESTA URL (DE TU IMAGEN DE CONFIGURACIÓN)
-    const SUPABASE_URL = 'https://skrzforgasidungtsrcs.supabase.co';
+    const SUPABASE_URL = 'https://xkzxforgasbdamgtarcz.supabase.co';
     
     // ✅ CLAVE PÚBLICA COMPLETA (no truncada)
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhrenhmb3JnYXNiZGFtZ3RhcmN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY1MjI1NjAsImV4cCI6MjA4MjA5ODU2MH0.CVR0bD02Vc80cRIMnfplDrO8S3txxgw5Tba4Oe9Ua8Q'; // Reemplaza con la COMPLETA
+    const SUPABASE_KEY = 'sb_publishable_CJ5yPSBEGz7wgeSmChIWoA_aEMdNOlg'; // Reemplaza con la COMPLETA
     
     console.log('📡 URL:', SUPABASE_URL);
     console.log('🔑 Clave:', SUPABASE_KEY.substring(0, 30) + '...');
