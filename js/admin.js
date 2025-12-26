@@ -66,11 +66,6 @@ window.agregarProducto = async function() {
         activo: true
     };
     
-    const imagenInput = document.getElementById('imagen');
-    if (imagenInput.files && imagenInput.files[0]) {
-        producto.imagen_url = await subirImagen(imagenInput.files[0]);
-    }
-    
     if (!producto.nombre) {
         alert('El nombre es obligatorio');
         return;
@@ -81,21 +76,46 @@ window.agregarProducto = async function() {
         return;
     }
     
-    try {
-        const { error } = await window.supabaseClient
-            .from('productos')
-            .insert([producto]);
-        
-        if (error) {
-            alert('Error: ' + error.message);
-        } else {
-            alert('✅ Producto agregado!');
-            await cargarProductosAdmin();
-            limpiarFormulario();
+    const imagenInput = document.getElementById('imagen');
+    let imagenUrl = 'img/default.jpg'; // Imagen por defecto
+    
+    // Subir imagen si existe
+    if (imagenInput.files && imagenInput.files[0]) {
+        try {
+            imagenUrl = await subirImagenLocal(imagenInput.files[0]);
+            producto.imagen_url = imagenUrl;
+        } catch (error) {
+            alert('Error subiendo imagen: ' + error.message);
+            producto.imagen_url = 'img/default.jpg'; // Usar default si falla
         }
+    } else {
+        producto.imagen_url = imagenUrl;
+    }
+    
+    // Deshabilitar botón durante proceso
+    const btn = document.querySelector('#admin-panel .btn-primary');
+    const originalText = btn.textContent;
+    btn.textContent = 'Agregando...';
+    btn.disabled = true;
+    
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('productos')
+            .insert([producto])
+            .select();
+        
+        if (error) throw error;
+        
+        alert('✅ Producto agregado exitosamente!');
+        await cargarProductosAdmin();
+        limpiarFormulario();
         
     } catch (error) {
+        console.error('Error agregando producto:', error);
         alert('Error: ' + error.message);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
     }
 };
 
@@ -417,8 +437,21 @@ window.guardarEdicion = async function(productoId) {
     };
     
     const imagenInput = document.getElementById('edit-imagen');
+    const imagenActual = window.productosAdmin?.find(p => p.id === productoId)?.imagen_url;
+    
+    // Si hay nueva imagen, subirla
     if (imagenInput.files && imagenInput.files[0]) {
-        producto.imagen_url = await subirImagen(imagenInput.files[0]);
+        try {
+            // Eliminar imagen anterior si no es default.jpg
+            await eliminarImagenLocal(imagenActual);
+            
+            // Subir nueva imagen
+            producto.imagen_url = await subirImagenLocal(imagenInput.files[0]);
+            
+        } catch (error) {
+            alert('Error subiendo imagen: ' + error.message);
+            producto.imagen_url = imagenActual; // Mantener la anterior
+        }
     }
     
     if (!producto.nombre) {
@@ -453,3 +486,73 @@ async function initAdmin() {
 }
 
 document.addEventListener('DOMContentLoaded', initAdmin);
+
+// Función para subir imagen al servidor
+async function subirImagenLocal(file) {
+    try {
+        console.log('📤 Subiendo imagen localmente...', file.name);
+        
+        // Validaciones
+        if (!file.type.startsWith('image/')) {
+            throw new Error('Solo se permiten imágenes');
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            throw new Error('Máximo 5MB por imagen');
+        }
+        
+        // Crear FormData
+        const formData = new FormData();
+        formData.append('imagen', file);
+        
+        // Mostrar indicador de carga
+        const loading = document.getElementById('loading-imagen');
+        if (loading) {
+            loading.style.display = 'block';
+            loading.innerHTML = '<div class="spinner"></div><p>Subiendo imagen...</p>';
+        }
+        
+        // Enviar al servidor
+        const response = await fetch('upload.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (loading) loading.style.display = 'none';
+        
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        
+        console.log('✅ Imagen subida:', result.url);
+        return result.url;
+        
+    } catch (error) {
+        console.error('❌ Error subiendo imagen:', error);
+        
+        // Mostrar error específico
+        if (error.message.includes('Failed to fetch')) {
+            throw new Error('No se pudo conectar con el servidor. Verifica que upload.php existe.');
+        }
+        
+        throw error;
+    }
+}
+
+// Función para eliminar imagen local
+async function eliminarImagenLocal(urlImagen) {
+    try {
+        // Solo eliminar si es una imagen local (no default.jpg)
+        if (urlImagen && urlImagen.startsWith('img/productos/') && !urlImagen.includes('default.jpg')) {
+            console.log('🗑️ Solicitando eliminar imagen:', urlImagen);
+            
+            // En un sistema real, crearías un delete.php
+            // Por ahora solo mostrar log
+            console.log('Imagen marcada para eliminación:', urlImagen);
+        }
+    } catch (error) {
+        console.error('Error eliminando imagen:', error);
+    }
+}

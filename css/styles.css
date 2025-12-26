@@ -178,19 +178,134 @@ header {
     margin: 15px 0;
 }
 
+/* Estilos para upload local */
 .upload-label {
-    display: block;
-    padding: 12px;
-    background: #f0f0f0;
-    border: 2px dashed #ccc;
-    border-radius: 5px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    border-radius: 12px;
     cursor: pointer;
-    margin-bottom: 10px;
+    transition: all 0.3s;
+    border: none;
+    text-align: left;
 }
 
 .upload-label:hover {
-    background: #e8e8e8;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+.upload-icon {
+    font-size: 2em;
+    background: rgba(255,255,255,0.2);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-text {
+    flex: 1;
+}
+
+.upload-text small {
+    display: block;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+.image-preview {
+    margin: 20px 0;
+    text-align: center;
+    min-height: 100px;
+}
+
+.preview-placeholder {
+    padding: 30px;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    color: #6c757d;
+}
+
+.placeholder-icon {
+    font-size: 3em;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border: 3px solid white;
+}
+
+.upload-loading {
+    text-align: center;
+    padding: 20px;
+}
+
+.upload-info {
+    background: #e8f4fd;
+    border-left: 4px solid #3498db;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.upload-info code {
+    display: block;
+    background: white;
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #2c3e50;
+}
+
+/* Spinner */
+.spinner {
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top: 3px solid #fff;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Para carrusel futuro */
+.carousel-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+.carousel-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.carousel-image:hover {
+    transform: scale(1.05);
 }
 
 .image-preview img {
