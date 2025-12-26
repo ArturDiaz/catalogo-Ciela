@@ -1,4 +1,10 @@
-// js/admin.js - VERSIÓN LIMPIA Y OPTIMIZADA
+// js/admin.js - VERSIÓN CON CLOUDINARY INTEGRADO
+
+// ====================
+// CONFIGURACIÓN CLOUDINARY
+// ====================
+const CLOUDINARY_CLOUD_NAME = 'dqddikvnz'; // Cambia esto por tu Cloud Name
+const CLOUDINARY_UPLOAD_PRESET = 'ciela_products'; // Cambia esto por tu Upload Preset
 
 // ====================
 // INICIALIZACIÓN
@@ -70,6 +76,68 @@ window.logout = async function() {
 };
 
 // ====================
+// FUNCIÓN PARA SUBIR A CLOUDINARY
+// ====================
+
+async function subirImagenACloudinary(file) {
+    console.log('📤 Subiendo a Cloudinary...', file.name);
+    
+    // Validaciones
+    if (!file.type.startsWith('image/')) {
+        throw new Error('Solo se permiten imágenes');
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB máximo
+        throw new Error('Máximo 10MB por imagen');
+    }
+    
+    // Mostrar loading
+    const loading = document.getElementById('loading-imagen');
+    if (loading) {
+        loading.style.display = 'block';
+        loading.innerHTML = '<div>📤 Subiendo imagen...</div>';
+    }
+    
+    try {
+        // Crear FormData
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
+        formData.append('folder', 'ciela/productos'); // Organiza en carpetas
+        
+        // Subir a Cloudinary
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Error subiendo imagen');
+        }
+        
+        const data = await response.json();
+        
+        console.log('✅ Imagen subida:', data.secure_url);
+        
+        return {
+            url: data.secure_url,
+            publicId: data.public_id
+        };
+        
+    } catch (error) {
+        console.error('❌ Error Cloudinary:', error);
+        throw new Error(`Cloudinary: ${error.message}`);
+    } finally {
+        if (loading) loading.style.display = 'none';
+    }
+}
+
+// ====================
 // GESTIÓN DE PRODUCTOS
 // ====================
 
@@ -93,18 +161,24 @@ window.agregarProducto = async function() {
         return;
     }
     
-    // Obtener nombre de la imagen
     const imagenInput = document.getElementById('imagen');
     
     if (imagenInput.files && imagenInput.files[0]) {
-        const archivo = imagenInput.files[0];
-        const rutaFinal = await generarNombreImagen(archivo.name);
-        producto.imagen_url = `img/productos/${rutaFinal}`;
-        
-        // Mostrar instrucciones para la imagen
-        mostrarInstruccionesImagen(producto.imagen_url, archivo);
+        try {
+            // Subir a Cloudinary
+            const imagenData = await subirImagenACloudinary(imagenInput.files[0]);
+            producto.imagen_url = imagenData.url;
+            
+            console.log('✅ Imagen en Cloudinary:', producto.imagen_url);
+            
+        } catch (error) {
+            alert('Error subiendo imagen: ' + error.message);
+            // Imagen por defecto de Cloudinary
+            producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
+        }
     } else {
-        producto.imagen_url = 'img/default.jpg';
+        // Imagen por defecto de Cloudinary
+        producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
     }
     
     // Deshabilitar botón durante proceso
@@ -121,7 +195,7 @@ window.agregarProducto = async function() {
         
         if (error) throw error;
         
-        alert('✅ Producto agregado exitosamente!\n\nRevisa las instrucciones para la imagen.');
+        alert('✅ Producto agregado exitosamente!\nLa imagen ya está en la nube.');
         await cargarProductosAdmin();
         limpiarFormulario();
         
@@ -187,112 +261,13 @@ function limpiarFormulario() {
     document.getElementById('precio').value = '';
     document.getElementById('stock').value = '0';
     document.getElementById('imagen').value = '';
-    document.getElementById('preview-imagen').innerHTML = '';
-}
-
-async function generarNombreImagen(nombreOriginal) {
-    try {
-        // Consultar productos existentes para obtener el próximo número
-        const { data: productos, error } = await window.supabaseClient
-            .from('productos')
-            .select('imagen_url')
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Buscar el número más alto usado
-        let maxNum = 0;
-        productos.forEach(p => {
-            if (p.imagen_url && p.imagen_url.includes('producto_')) {
-                const match = p.imagen_url.match(/producto_(\d+)\./);
-                if (match) {
-                    const num = parseInt(match[1]);
-                    if (num > maxNum) maxNum = num;
-                }
-            }
-        });
-        
-        const siguienteNumero = maxNum + 1;
-        const numeroFormateado = siguienteNumero.toString().padStart(3, '0');
-        
-        // Obtener extensión del archivo original
-        const extension = nombreOriginal.split('.').pop().toLowerCase();
-        
-        return `producto_${numeroFormateado}.${extension}`;
-        
-    } catch (error) {
-        console.error('Error generando nombre:', error);
-        // Fallback: usar timestamp
-        const extension = nombreOriginal.split('.').pop().toLowerCase();
-        return `producto_${Date.now()}.${extension}`;
-    }
-}
-
-function mostrarInstruccionesImagen(rutaImagen, archivo) {
-    const nombreArchivo = rutaImagen.split('/').pop();
-    
-    // Crear modal de instrucciones
-    const modalHTML = `
-        <div class="modal-overlay" id="instrucciones-modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>📋 Instrucciones para la Imagen</h2>
-                    <button class="modal-close" onclick="cerrarInstrucciones()">×</button>
-                </div>
-                <div class="modal-body">
-                    <p><strong>Producto guardado en la base de datos ✅</strong></p>
-                    <p>Ahora necesitas manejar la imagen manualmente:</p>
-                    
-                    <div class="instruccion-paso">
-                        <strong>1. Nombre del archivo:</strong>
-                        <code>${nombreArchivo}</code>
-                    </div>
-                    
-                    <div class="instruccion-paso">
-                        <strong>2. Descargar imagen:</strong>
-                        <p>Haz clic derecho sobre la imagen → "Guardar imagen como..."</p>
-                        <div id="imagen-descarga" style="text-align: center; margin: 15px 0;"></div>
-                    </div>
-                    
-                    <div class="instruccion-paso">
-                        <strong>3. Subir a GitHub:</strong>
-                        <p>Sube el archivo <code>${nombreArchivo}</code> a la carpeta <code>/img/productos/</code> de tu proyecto</p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-primary" onclick="cerrarInstrucciones()">Entendido</button>
-                </div>
-            </div>
+    document.getElementById('preview-imagen').innerHTML = `
+        <div class="preview-placeholder">
+            <div class="placeholder-icon">🖼️</div>
+            <p>Vista previa aparecerá aquí</p>
         </div>
     `;
-    
-    // Remover modal existente si hay
-    const modalExistente = document.getElementById('instrucciones-modal');
-    if (modalExistente) modalExistente.remove();
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
-    // Mostrar la imagen seleccionada para descarga
-    if (archivo) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const contenedor = document.getElementById('imagen-descarga');
-            if (contenedor) {
-                contenedor.innerHTML = `
-                    <img src="${e.target.result}" 
-                         style="max-width: 250px; max-height: 200px; border: 2px solid #ddd; border-radius: 5px; padding: 5px;">
-                    <p><small>Haz clic derecho sobre la imagen para guardarla</small></p>
-                `;
-            }
-        };
-        reader.readAsDataURL(archivo);
-    }
 }
-
-window.cerrarInstrucciones = function() {
-    const modal = document.getElementById('instrucciones-modal');
-    if (modal) modal.remove();
-};
 
 async function cargarProductosAdmin() {
     try {
@@ -318,7 +293,8 @@ async function cargarProductosAdmin() {
                 <div class="producto-header">
                     <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
                     ${p.imagen_url ? 
-                        `<img src="${p.imagen_url}" alt="${p.nombre}" class="producto-img" onerror="this.src='img/default.jpg'">` 
+                        `<img src="${p.imagen_url}" alt="${p.nombre}" class="producto-img" 
+                             onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">` 
                         : 
                         `<div class="no-image">Sin imagen</div>`
                     }
@@ -464,14 +440,16 @@ function mostrarModalEdicion(producto) {
                     <div class="imagen-upload">
                         <label>Imagen actual:</label>
                         ${producto.imagen_url ? 
-                            `<img src="${producto.imagen_url}" class="imagen-preview" style="max-width: 200px; margin: 10px 0;" onerror="this.src='img/default.jpg'">` 
+                            `<img src="${producto.imagen_url}" class="imagen-preview" 
+                                 style="max-width: 200px; margin: 10px 0;" 
+                                 onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">` 
                             : '<p>Sin imagen</p>'
                         }
                         <label for="edit-imagen" style="display: block; margin-top: 10px;">
                             <strong>Cambiar imagen:</strong>
                         </label>
                         <input type="file" id="edit-imagen" accept="image/*" style="margin-top: 5px;">
-                        <small>Si seleccionas una nueva imagen, deberás subirla manualmente a GitHub</small>
+                        <small>La nueva imagen se subirá automáticamente a Cloudinary</small>
                     </div>
                 </div>
                 
@@ -519,15 +497,18 @@ window.guardarEdicion = async function(productoId) {
     
     // Si hay nueva imagen seleccionada
     if (imagenInput.files && imagenInput.files[0]) {
-        const archivo = imagenInput.files[0];
-        const nuevoNombre = await generarNombreImagen(archivo.name);
-        producto.imagen_url = `img/productos/${nuevoNombre}`;
-        
-        // Mostrar instrucciones para la nueva imagen
-        mostrarInstruccionesImagen(producto.imagen_url, archivo);
+        try {
+            // Subir nueva imagen a Cloudinary
+            const imagenData = await subirImagenACloudinary(imagenInput.files[0]);
+            producto.imagen_url = imagenData.url;
+            
+        } catch (error) {
+            alert('Error subiendo nueva imagen: ' + error.message);
+            producto.imagen_url = productoOriginal?.imagen_url;
+        }
     } else {
         // Mantener la imagen actual
-        producto.imagen_url = productoOriginal?.imagen_url || 'img/default.jpg';
+        producto.imagen_url = productoOriginal?.imagen_url;
     }
     
     try {
@@ -579,3 +560,26 @@ async function initAdmin() {
 
 // Iniciar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', initAdmin);
+
+// Estilos adicionales para la carga
+const style = document.createElement('style');
+style.textContent = `
+    #loading-imagen {
+        text-align: center;
+        padding: 10px;
+        background: #f0f9ff;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
+    
+    #loading-imagen div {
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+`;
+document.head.appendChild(style);
