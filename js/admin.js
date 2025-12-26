@@ -1,4 +1,4 @@
-// js/admin.js - VERSIÓN CON CLOUDINARY INTEGRADO
+// js/admin.js - VERSIÓN CON CLOUDINARY INTEGRADO (LIMPIADO)
 
 // ====================
 // CONFIGURACIÓN CLOUDINARY
@@ -18,13 +18,11 @@ async function waitForSupabase() {
         const check = () => {
             attempts++;
             if (window.supabaseClient) {
-                console.log('✅ Supabase listo');
                 resolve();
                 return;
             }
             
             if (attempts >= maxAttempts) {
-                console.error('❌ Timeout esperando Supabase');
                 resolve();
                 return;
             }
@@ -80,8 +78,6 @@ window.logout = async function() {
 // ====================
 
 async function subirImagenACloudinary(file) {
-    console.log('📤 Subiendo a Cloudinary...', file.name);
-    
     // Validaciones
     if (!file.type.startsWith('image/')) {
         throw new Error('Solo se permiten imágenes');
@@ -104,7 +100,7 @@ async function subirImagenACloudinary(file) {
         formData.append('file', file);
         formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
         formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
-        formData.append('folder', 'ciela/productos'); // Organiza en carpetas
+        formData.append('folder', 'ciela/productos');
         
         // Subir a Cloudinary
         const response = await fetch(
@@ -122,15 +118,12 @@ async function subirImagenACloudinary(file) {
         
         const data = await response.json();
         
-        console.log('✅ Imagen subida:', data.secure_url);
-        
         return {
             url: data.secure_url,
             publicId: data.public_id
         };
         
     } catch (error) {
-        console.error('❌ Error Cloudinary:', error);
         throw new Error(`Cloudinary: ${error.message}`);
     } finally {
         if (loading) loading.style.display = 'none';
@@ -165,19 +158,13 @@ window.agregarProducto = async function() {
     
     if (imagenInput.files && imagenInput.files[0]) {
         try {
-            // Subir a Cloudinary
             const imagenData = await subirImagenACloudinary(imagenInput.files[0]);
             producto.imagen_url = imagenData.url;
-            
-            console.log('✅ Imagen en Cloudinary:', producto.imagen_url);
-            
         } catch (error) {
             alert('Error subiendo imagen: ' + error.message);
-            // Imagen por defecto de Cloudinary
             producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
         }
     } else {
-        // Imagen por defecto de Cloudinary
         producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
     }
     
@@ -200,7 +187,6 @@ window.agregarProducto = async function() {
         limpiarFormulario();
         
     } catch (error) {
-        console.error('Error agregando producto:', error);
         alert('Error: ' + error.message);
     } finally {
         btn.textContent = originalText;
@@ -210,7 +196,6 @@ window.agregarProducto = async function() {
 
 window.actualizarStock = async function(productoId, cambio) {
     try {
-        // Obtener producto actual
         const { data: producto, error: fetchError } = await window.supabaseClient
             .from('productos')
             .select('stock')
@@ -333,7 +318,6 @@ async function cargarProductosAdmin() {
         `).join('');
         
     } catch (error) {
-        console.error('Error cargando productos:', error);
         const lista = document.getElementById('lista-productos');
         if (lista) {
             lista.innerHTML = '<p class="error">Error cargando productos</p>';
@@ -418,7 +402,6 @@ window.editarProducto = async function(productoId) {
     const producto = window.productosAdmin?.find(p => p.id === productoId);
     if (!producto) return;
     
-    // Mostrar modal de edición
     mostrarModalEdicion(producto);
 };
 
@@ -461,7 +444,6 @@ function mostrarModalEdicion(producto) {
         </div>
     `;
     
-    // Remover modal existente si hay
     const modalExistente = document.getElementById('modal-edicion');
     if (modalExistente) modalExistente.remove();
     
@@ -495,19 +477,15 @@ window.guardarEdicion = async function(productoId) {
         return;
     }
     
-    // Si hay nueva imagen seleccionada
     if (imagenInput.files && imagenInput.files[0]) {
         try {
-            // Subir nueva imagen a Cloudinary
             const imagenData = await subirImagenACloudinary(imagenInput.files[0]);
             producto.imagen_url = imagenData.url;
-            
         } catch (error) {
             alert('Error subiendo nueva imagen: ' + error.message);
             producto.imagen_url = productoOriginal?.imagen_url;
         }
     } else {
-        // Mantener la imagen actual
         producto.imagen_url = productoOriginal?.imagen_url;
     }
     
@@ -545,7 +523,7 @@ async function verificarSesion() {
         }
         
     } catch (error) {
-        console.error('Error verificando sesión:', error);
+        // Sesión no válida o error, mostrar formulario de login
     }
 }
 
