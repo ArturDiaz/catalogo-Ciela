@@ -1,4 +1,9 @@
-// js/admin.js - VERSIÓN LIMPIA Y MEJORADA
+// js/admin.js - VERSIÓN LIMPIA Y OPTIMIZADA
+
+// ====================
+// INICIALIZACIÓN
+// ====================
+
 async function waitForSupabase() {
     return new Promise((resolve) => {
         let attempts = 0;
@@ -26,7 +31,7 @@ async function waitForSupabase() {
 }
 
 // ====================
-// FUNCIONES GLOBALES
+// AUTENTICACIÓN
 // ====================
 
 window.login = async function() {
@@ -57,15 +62,27 @@ window.login = async function() {
     }
 };
 
+window.logout = async function() {
+    if (window.supabaseClient) {
+        await window.supabaseClient.auth.signOut();
+    }
+    window.location.reload();
+};
+
+// ====================
+// GESTIÓN DE PRODUCTOS
+// ====================
+
 window.agregarProducto = async function() {
     const producto = {
-        nombre: document.getElementById('nombre').value,
-        descripcion: document.getElementById('descripcion').value,
+        nombre: document.getElementById('nombre').value.trim(),
+        descripcion: document.getElementById('descripcion').value.trim(),
         precio: parseFloat(document.getElementById('precio').value) || 0,
         stock: parseInt(document.getElementById('stock').value) || 0,
         activo: true
     };
     
+    // Validaciones
     if (!producto.nombre) {
         alert('El nombre es obligatorio');
         return;
@@ -76,20 +93,18 @@ window.agregarProducto = async function() {
         return;
     }
     
+    // Obtener nombre de la imagen
     const imagenInput = document.getElementById('imagen');
-    let imagenUrl = 'img/default.jpg'; // Imagen por defecto
     
-    // Subir imagen si existe
     if (imagenInput.files && imagenInput.files[0]) {
-        try {
-            imagenUrl = await subirImagenLocal(imagenInput.files[0]);
-            producto.imagen_url = imagenUrl;
-        } catch (error) {
-            alert('Error subiendo imagen: ' + error.message);
-            producto.imagen_url = 'img/default.jpg'; // Usar default si falla
-        }
+        const archivo = imagenInput.files[0];
+        const rutaFinal = await generarNombreImagen(archivo.name);
+        producto.imagen_url = `img/productos/${rutaFinal}`;
+        
+        // Mostrar instrucciones para la imagen
+        mostrarInstruccionesImagen(producto.imagen_url, archivo);
     } else {
-        producto.imagen_url = imagenUrl;
+        producto.imagen_url = 'img/default.jpg';
     }
     
     // Deshabilitar botón durante proceso
@@ -106,7 +121,7 @@ window.agregarProducto = async function() {
         
         if (error) throw error;
         
-        alert('✅ Producto agregado exitosamente!');
+        alert('✅ Producto agregado exitosamente!\n\nRevisa las instrucciones para la imagen.');
         await cargarProductosAdmin();
         limpiarFormulario();
         
@@ -119,64 +134,27 @@ window.agregarProducto = async function() {
     }
 };
 
-async function subirImagen(file) {
+window.actualizarStock = async function(productoId, cambio) {
     try {
-        // 1. Convertir imagen a base64
-        const base64 = await fileToBase64(file);
+        // Obtener producto actual
+        const { data: producto, error: fetchError } = await window.supabaseClient
+            .from('productos')
+            .select('stock')
+            .eq('id', productoId)
+            .single();
         
-        // 2. Subir a Supabase Storage
-        const fileName = `producto_${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-        const filePath = `productos/${fileName}`;
+        if (fetchError) throw fetchError;
         
-        // 3. Subir archivo (necesitas configurar storage en Supabase)
-        const { data, error } = await window.supabaseClient.storage
-            .from('product-images') // Nombre del bucket que debes crear
-            .upload(filePath, file);
+        const nuevoStock = Math.max(0, (producto.stock || 0) + cambio);
+        
+        const { error } = await window.supabaseClient
+            .from('productos')
+            .update({ stock: nuevoStock })
+            .eq('id', productoId);
         
         if (error) throw error;
         
-        // 4. Obtener URL pública
-        const { data: { publicUrl } } = window.supabaseClient.storage
-            .from('product-images')
-            .getPublicUrl(filePath);
-        
-        return publicUrl;
-        
-    } catch (error) {
-        console.error('Error subiendo imagen:', error);
-        alert('Error subiendo imagen. Usando placeholder.');
-        return 'img/default.jpg';
-    }
-}
-
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-}
-
-window.logout = async function() {
-    if (window.supabaseClient) {
-        await window.supabaseClient.auth.signOut();
-    }
-    window.location.reload();
-};
-
-window.actualizarStock = async function(productoId, cambio) {
-    try {
-        const { error } = await window.supabaseClient.rpc('actualizar_stock', {
-            producto_id: productoId,
-            cantidad_cambio: cambio
-        });
-        
-        if (error) {
-            alert('Error: ' + error.message);
-        } else {
-            await cargarProductosAdmin();
-        }
+        await cargarProductosAdmin();
         
     } catch (error) {
         alert('Error: ' + error.message);
@@ -190,27 +168,17 @@ window.toggleActivo = async function(productoId, nuevoEstado) {
             .update({ activo: nuevoEstado })
             .eq('id', productoId);
         
-        if (error) {
-            alert('Error: ' + error.message);
-        } else {
-            await cargarProductosAdmin();
-        }
+        if (error) throw error;
+        
+        await cargarProductosAdmin();
         
     } catch (error) {
         alert('Error: ' + error.message);
     }
 };
 
-window.editarProducto = async function(productoId) {
-    const producto = window.productosAdmin?.find(p => p.id === productoId);
-    if (!producto) return;
-    
-    // Mostrar modal de edición
-    mostrarModalEdicion(producto);
-};
-
 // ====================
-// FUNCIONES INTERNAS
+// FUNCIONES AUXILIARES
 // ====================
 
 function limpiarFormulario() {
@@ -221,6 +189,110 @@ function limpiarFormulario() {
     document.getElementById('imagen').value = '';
     document.getElementById('preview-imagen').innerHTML = '';
 }
+
+async function generarNombreImagen(nombreOriginal) {
+    try {
+        // Consultar productos existentes para obtener el próximo número
+        const { data: productos, error } = await window.supabaseClient
+            .from('productos')
+            .select('imagen_url')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Buscar el número más alto usado
+        let maxNum = 0;
+        productos.forEach(p => {
+            if (p.imagen_url && p.imagen_url.includes('producto_')) {
+                const match = p.imagen_url.match(/producto_(\d+)\./);
+                if (match) {
+                    const num = parseInt(match[1]);
+                    if (num > maxNum) maxNum = num;
+                }
+            }
+        });
+        
+        const siguienteNumero = maxNum + 1;
+        const numeroFormateado = siguienteNumero.toString().padStart(3, '0');
+        
+        // Obtener extensión del archivo original
+        const extension = nombreOriginal.split('.').pop().toLowerCase();
+        
+        return `producto_${numeroFormateado}.${extension}`;
+        
+    } catch (error) {
+        console.error('Error generando nombre:', error);
+        // Fallback: usar timestamp
+        const extension = nombreOriginal.split('.').pop().toLowerCase();
+        return `producto_${Date.now()}.${extension}`;
+    }
+}
+
+function mostrarInstruccionesImagen(rutaImagen, archivo) {
+    const nombreArchivo = rutaImagen.split('/').pop();
+    
+    // Crear modal de instrucciones
+    const modalHTML = `
+        <div class="modal-overlay" id="instrucciones-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📋 Instrucciones para la Imagen</h2>
+                    <button class="modal-close" onclick="cerrarInstrucciones()">×</button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Producto guardado en la base de datos ✅</strong></p>
+                    <p>Ahora necesitas manejar la imagen manualmente:</p>
+                    
+                    <div class="instruccion-paso">
+                        <strong>1. Nombre del archivo:</strong>
+                        <code>${nombreArchivo}</code>
+                    </div>
+                    
+                    <div class="instruccion-paso">
+                        <strong>2. Descargar imagen:</strong>
+                        <p>Haz clic derecho sobre la imagen → "Guardar imagen como..."</p>
+                        <div id="imagen-descarga" style="text-align: center; margin: 15px 0;"></div>
+                    </div>
+                    
+                    <div class="instruccion-paso">
+                        <strong>3. Subir a GitHub:</strong>
+                        <p>Sube el archivo <code>${nombreArchivo}</code> a la carpeta <code>/img/productos/</code> de tu proyecto</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" onclick="cerrarInstrucciones()">Entendido</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente si hay
+    const modalExistente = document.getElementById('instrucciones-modal');
+    if (modalExistente) modalExistente.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Mostrar la imagen seleccionada para descarga
+    if (archivo) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const contenedor = document.getElementById('imagen-descarga');
+            if (contenedor) {
+                contenedor.innerHTML = `
+                    <img src="${e.target.result}" 
+                         style="max-width: 250px; max-height: 200px; border: 2px solid #ddd; border-radius: 5px; padding: 5px;">
+                    <p><small>Haz clic derecho sobre la imagen para guardarla</small></p>
+                `;
+            }
+        };
+        reader.readAsDataURL(archivo);
+    }
+}
+
+window.cerrarInstrucciones = function() {
+    const modal = document.getElementById('instrucciones-modal');
+    if (modal) modal.remove();
+};
 
 async function cargarProductosAdmin() {
     try {
@@ -246,7 +318,7 @@ async function cargarProductosAdmin() {
                 <div class="producto-header">
                     <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
                     ${p.imagen_url ? 
-                        `<img src="${p.imagen_url}" alt="${p.nombre}" class="producto-img">` 
+                        `<img src="${p.imagen_url}" alt="${p.nombre}" class="producto-img" onerror="this.src='img/default.jpg'">` 
                         : 
                         `<div class="no-image">Sin imagen</div>`
                     }
@@ -290,23 +362,6 @@ async function cargarProductosAdmin() {
         if (lista) {
             lista.innerHTML = '<p class="error">Error cargando productos</p>';
         }
-    }
-}
-
-async function verificarSesion() {
-    try {
-        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-        
-        if (error) throw error;
-        
-        if (session) {
-            document.getElementById('login-form').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'block';
-            await cargarProductosAdmin();
-        }
-        
-    } catch (error) {
-        console.error('Error verificando sesión:', error);
     }
 }
 
@@ -380,8 +435,16 @@ window.desactivarSeleccionados = async function() {
 };
 
 // ====================
-// MODAL DE EDICIÓN
+// EDICIÓN DE PRODUCTOS
 // ====================
+
+window.editarProducto = async function(productoId) {
+    const producto = window.productosAdmin?.find(p => p.id === productoId);
+    if (!producto) return;
+    
+    // Mostrar modal de edición
+    mostrarModalEdicion(producto);
+};
 
 function mostrarModalEdicion(producto) {
     const modalHTML = `
@@ -393,18 +456,22 @@ function mostrarModalEdicion(producto) {
                 </div>
                 
                 <div class="modal-body">
-                    <input type="text" id="edit-nombre" value="${producto.nombre}" placeholder="Nombre">
+                    <input type="text" id="edit-nombre" value="${producto.nombre}" placeholder="Nombre *" required>
                     <textarea id="edit-descripcion" placeholder="Descripción">${producto.descripcion || ''}</textarea>
-                    <input type="number" id="edit-precio" value="${producto.precio}" step="0.01" placeholder="Precio">
+                    <input type="number" id="edit-precio" value="${producto.precio}" step="0.01" placeholder="Precio *" required>
                     <input type="number" id="edit-stock" value="${producto.stock}" placeholder="Stock">
                     
                     <div class="imagen-upload">
                         <label>Imagen actual:</label>
                         ${producto.imagen_url ? 
-                            `<img src="${producto.imagen_url}" class="imagen-preview">` 
+                            `<img src="${producto.imagen_url}" class="imagen-preview" style="max-width: 200px; margin: 10px 0;" onerror="this.src='img/default.jpg'">` 
                             : '<p>Sin imagen</p>'
                         }
-                        <input type="file" id="edit-imagen" accept="image/*">
+                        <label for="edit-imagen" style="display: block; margin-top: 10px;">
+                            <strong>Cambiar imagen:</strong>
+                        </label>
+                        <input type="file" id="edit-imagen" accept="image/*" style="margin-top: 5px;">
+                        <small>Si seleccionas una nueva imagen, deberás subirla manualmente a GitHub</small>
                     </div>
                 </div>
                 
@@ -430,33 +497,37 @@ window.cerrarModal = function() {
 
 window.guardarEdicion = async function(productoId) {
     const producto = {
-        nombre: document.getElementById('edit-nombre').value,
-        descripcion: document.getElementById('edit-descripcion').value,
+        nombre: document.getElementById('edit-nombre').value.trim(),
+        descripcion: document.getElementById('edit-descripcion').value.trim(),
         precio: parseFloat(document.getElementById('edit-precio').value) || 0,
         stock: parseInt(document.getElementById('edit-stock').value) || 0
     };
     
     const imagenInput = document.getElementById('edit-imagen');
-    const imagenActual = window.productosAdmin?.find(p => p.id === productoId)?.imagen_url;
+    const productoOriginal = window.productosAdmin?.find(p => p.id === productoId);
     
-    // Si hay nueva imagen, subirla
-    if (imagenInput.files && imagenInput.files[0]) {
-        try {
-            // Eliminar imagen anterior si no es default.jpg
-            await eliminarImagenLocal(imagenActual);
-            
-            // Subir nueva imagen
-            producto.imagen_url = await subirImagenLocal(imagenInput.files[0]);
-            
-        } catch (error) {
-            alert('Error subiendo imagen: ' + error.message);
-            producto.imagen_url = imagenActual; // Mantener la anterior
-        }
-    }
-    
+    // Validaciones
     if (!producto.nombre) {
         alert('El nombre es obligatorio');
         return;
+    }
+    
+    if (!producto.precio || producto.precio <= 0) {
+        alert('El precio debe ser mayor a 0');
+        return;
+    }
+    
+    // Si hay nueva imagen seleccionada
+    if (imagenInput.files && imagenInput.files[0]) {
+        const archivo = imagenInput.files[0];
+        const nuevoNombre = await generarNombreImagen(archivo.name);
+        producto.imagen_url = `img/productos/${nuevoNombre}`;
+        
+        // Mostrar instrucciones para la nueva imagen
+        mostrarInstruccionesImagen(producto.imagen_url, archivo);
+    } else {
+        // Mantener la imagen actual
+        producto.imagen_url = productoOriginal?.imagen_url || 'img/default.jpg';
     }
     
     try {
@@ -477,7 +548,28 @@ window.guardarEdicion = async function(productoId) {
 };
 
 // ====================
-// INICIAR
+// VERIFICACIÓN DE SESIÓN
+// ====================
+
+async function verificarSesion() {
+    try {
+        const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+        
+        if (error) throw error;
+        
+        if (session) {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            await cargarProductosAdmin();
+        }
+        
+    } catch (error) {
+        console.error('Error verificando sesión:', error);
+    }
+}
+
+// ====================
+// INICIALIZACIÓN
 // ====================
 
 async function initAdmin() {
@@ -485,74 +577,5 @@ async function initAdmin() {
     await verificarSesion();
 }
 
+// Iniciar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', initAdmin);
-
-// Función para subir imagen al servidor
-async function subirImagenLocal(file) {
-    try {
-        console.log('📤 Subiendo imagen localmente...', file.name);
-        
-        // Validaciones
-        if (!file.type.startsWith('image/')) {
-            throw new Error('Solo se permiten imágenes');
-        }
-        
-        if (file.size > 5 * 1024 * 1024) {
-            throw new Error('Máximo 5MB por imagen');
-        }
-        
-        // Crear FormData
-        const formData = new FormData();
-        formData.append('imagen', file);
-        
-        // Mostrar indicador de carga
-        const loading = document.getElementById('loading-imagen');
-        if (loading) {
-            loading.style.display = 'block';
-            loading.innerHTML = '<div class="spinner"></div><p>Subiendo imagen...</p>';
-        }
-        
-        // Enviar al servidor
-        const response = await fetch('upload.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        if (loading) loading.style.display = 'none';
-        
-        if (result.error) {
-            throw new Error(result.error);
-        }
-        
-        console.log('✅ Imagen subida:', result.url);
-        return result.url;
-        
-    } catch (error) {
-        console.error('❌ Error subiendo imagen:', error);
-        
-        // Mostrar error específico
-        if (error.message.includes('Failed to fetch')) {
-            throw new Error('No se pudo conectar con el servidor. Verifica que upload.php existe.');
-        }
-        
-        throw error;
-    }
-}
-
-// Función para eliminar imagen local
-async function eliminarImagenLocal(urlImagen) {
-    try {
-        // Solo eliminar si es una imagen local (no default.jpg)
-        if (urlImagen && urlImagen.startsWith('img/productos/') && !urlImagen.includes('default.jpg')) {
-            console.log('🗑️ Solicitando eliminar imagen:', urlImagen);
-            
-            // En un sistema real, crearías un delete.php
-            // Por ahora solo mostrar log
-            console.log('Imagen marcada para eliminación:', urlImagen);
-        }
-    } catch (error) {
-        console.error('Error eliminando imagen:', error);
-    }
-}
