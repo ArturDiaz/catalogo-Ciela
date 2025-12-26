@@ -3,7 +3,7 @@
 // ====================
 // CONFIGURACIÓN CLOUDINARY
 // ====================
-const CLOUDINARY_CLOUD_NAME = 'dqddikvnz'; // Cambia esto por tu Cloud Name
+const CLOUDINARY_CLOUD_NAME = 'dqmlubvqo'; // Cambia esto por tu Cloud Name
 const CLOUDINARY_UPLOAD_PRESET = 'ciela_products'; // Cambia esto por tu Upload Preset
 
 // ====================
