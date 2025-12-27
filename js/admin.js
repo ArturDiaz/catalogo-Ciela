@@ -189,10 +189,15 @@ window.agregarCategoria = async function() {
         return;
     }
     
-    const btn = document.querySelector('#form-categoria .btn-primary');
-    const originalText = btn.textContent;
-    btn.textContent = 'Agregando...';
-    btn.disabled = true;
+    // CORRECCIÓN: Usar el botón correcto del formulario de categorías
+    const btn = document.querySelector('.admin-section .btn-primary') || 
+                 document.querySelector('[onclick="agregarCategoria()"]');
+    const originalText = btn ? btn.textContent : 'Agregar Categoría';
+    
+    if (btn) {
+        btn.textContent = 'Agregando...';
+        btn.disabled = true;
+    }
     
     try {
         const { data, error } = await window.supabaseClient
@@ -214,8 +219,10 @@ window.agregarCategoria = async function() {
     } catch (error) {
         alert('Error: ' + error.message);
     } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     }
 };
 
