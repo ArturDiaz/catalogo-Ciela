@@ -5,6 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ciela - Panel de Administración</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Estilos adicionales específicos para admin */
+        .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            min-height: 150px;
+        }
+        
+        .imagen-preview-item {
+            width: 120px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .imagen-preview-item img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .imagen-info {
+            padding: 8px;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+        }
+        
+        .orden-control {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin: 4px 0;
+            font-size: 11px;
+        }
+        
+        .orden-control input {
+            width: 40px;
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        
+        .btn-remove-imagen {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 10px;
+            width: 100%;
+            margin-top: 4px;
+        }
+        
+        .preview-placeholder {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            width: 100%;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+        }
+        
+        .placeholder-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .producto-imagenes-carousel {
+            display: flex;
+            gap: 5px;
+            margin-right: 15px;
+        }
+        
+        .producto-img-mini {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+        }
+        
+        .mas-imagenes {
+            width: 50px;
+            height: 50px;
+            background: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        
+        .imagenes-count {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+    </style>
 </head>
 <body>
     <!-- FORMULARIO LOGIN -->
@@ -43,29 +152,33 @@
                         <button type="button" class="stock-btn plus" onclick="ajustarStock('stock', 1)">+</button>
                     </div>
                 </div>
+                
                 <select id="categoria" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px;">
                     <option value="">Selecciona una categoría</option>
                 </select>
                 
+                <!-- NUEVO: Input para múltiples imágenes -->
                 <div class="image-upload">
-                    <label for="imagen" class="upload-label">
+                    <label for="imagenes" class="upload-label">
                         <div class="upload-icon">📸</div>
                         <div class="upload-text">
-                            <strong>Tomar foto o seleccionar</strong>
-                            <small>JPG, PNG, WebP, GIF - Máx. 5MB</small>
+                            <strong>Seleccionar múltiples imágenes</strong>
+                            <small>JPG, PNG, WebP, GIF - Máx. 5MB cada una</small>
+                            <small>Primera imagen será la principal</small>
                         </div>
                     </label>
-                    <input type="file" id="imagen" accept="image/*" capture="environment">
+                    <input type="file" id="imagenes" accept="image/*" multiple>
                     
-                    <div id="preview-imagen" class="image-preview">
+                    <!-- Vista previa de múltiples imágenes -->
+                    <div id="preview-imagenes" class="preview-container">
                         <div class="preview-placeholder">
                             <div class="placeholder-icon">🖼️</div>
-                            <p>Vista previa aparecerá aquí</p>
+                            <p>Arrastra o selecciona múltiples imágenes</p>
+                            <small>Primera imagen será la principal</small>
                         </div>
                     </div>
                     
                     <div id="loading-imagen" class="upload-loading" style="display:none;"></div>
-                    
                 </div>
                 
                 <button onclick="agregarProducto()" class="btn-primary">Agregar Producto</button>
@@ -96,6 +209,7 @@
                 </div>
             </section>
             
+            <!-- SECCIÓN GESTIÓN DE CATEGORÍAS -->
             <div class="admin-section">
                 <h2>📁 Gestión de Categorías</h2>
                 <div class="form-container">
@@ -109,7 +223,6 @@
                 </div>
             </div>
         </main>
-
     </div>
     
     <!-- SCRIPTS -->
@@ -126,63 +239,6 @@
             if (valor < 0) valor = 0;
             input.value = valor;
         };
-        
-        // Vista previa de imagen
-        document.getElementById('imagen').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const preview = document.getElementById('preview-imagen');
-            
-            if (file) {
-                // Validar tamaño
-                if (file.size > 5 * 1024 * 1024) {
-                    preview.innerHTML = `
-                        <div class="preview-error">
-                            <div class="error-icon">❌</div>
-                            <p>Archivo demasiado grande</p>
-                            <small>Máximo 5MB</small>
-                        </div>
-                    `;
-                    this.value = ''; // Limpiar input
-                    return;
-                }
-                
-                // Validar tipo
-                if (!file.type.startsWith('image/')) {
-                    preview.innerHTML = `
-                        <div class="preview-error">
-                            <div class="error-icon">⚠️</div>
-                            <p>Solo se permiten imágenes</p>
-                        </div>
-                    `;
-                    this.value = '';
-                    return;
-                }
-                
-                // Mostrar vista previa
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.innerHTML = `
-                        <div class="preview-success">
-                            <img src="${e.target.result}" alt="Vista previa">
-                            <p class="file-info">
-                                <strong>${file.name}</strong><br>
-                                <small>${(file.size / 1024 / 1024).toFixed(2)} MB</small>
-                            </p>
-                        </div>
-                    `;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.innerHTML = `
-                    <div class="preview-placeholder">
-                        <div class="placeholder-icon">🖼️</div>
-                        <p>Vista previa aparecerá aquí</p>
-                    </div>
-                `;
-            }
-        });
-        
-        document.head.appendChild(style);
     </script>
 </body>
 </html>

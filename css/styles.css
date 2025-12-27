@@ -287,7 +287,113 @@ header {
     100% { transform: rotate(360deg); }
 }
 
-/* Para carrusel futuro */
+/* Estilos para el carrusel */
+.carrusel-section {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    margin-bottom: 3rem;
+}
+
+.carousel-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.carousel-producto {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding: 2rem;
+    background: white;
+    min-height: 400px;
+}
+
+.carousel-inner {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.carousel-image {
+    height: 300px;
+    object-fit: cover;
+    width: 100%;
+}
+
+.producto-info {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.producto-info h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.producto-info .categoria {
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.producto-info .descripcion {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.producto-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.producto-footer .precio {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.carousel-placeholder {
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+}
+
+.placeholder-content {
+    text-align: center;
+}
+
+/* Responsive para el carrusel */
+@media (max-width: 768px) {
+    .carousel-producto {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        min-height: auto;
+    }
+    
+    .carousel-image {
+        height: 250px;
+    }
+    
+    .producto-info {
+        padding: 1rem;
+    }
+    
+    .producto-info h3 {
+        font-size: 1.5rem;
+    }
+}
+
 .carousel-container {
     display: flex;
     overflow-x: auto;
@@ -520,7 +626,7 @@ header {
     color: white;
 }
 
-/* Agrega esto a tu CSS existente */
+/* Estilos para gestión de múltiples imágenes */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -529,28 +635,26 @@ header {
     bottom: 0;
     background: rgba(0,0,0,0.7);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
+    padding: 20px;
 }
 
 .modal-content {
     background: white;
-    padding: 20px;
     border-radius: 10px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
+    max-width: 90%;
+    max-height: 90vh;
     overflow-y: auto;
 }
 
 .modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
 }
 
 .modal-close {
@@ -558,41 +662,28 @@ header {
     border: none;
     font-size: 24px;
     cursor: pointer;
+    color: #666;
 }
 
-.instruccion-paso {
-    background: #f5f5f5;
-    padding: 15px;
-    margin: 10px 0;
+.modal-body {
+    padding: 20px;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
     border-radius: 5px;
-    border-left: 4px solid #007bff;
+    cursor: pointer;
 }
 
-.modal-body input,
-.modal-body textarea {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-.imagen-preview {
-    max-width: 200px;
-    max-height: 200px;
-    border-radius: 5px;
-    margin: 10px 0;
-}
-
-.modal-footer {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
+.btn-secondary:hover {
+    background: #5a6268;
 }
 
 .btn-cancel {
-    background: #95a5a6;
+    background: #6c757d;
     color: white;
     border: none;
     padding: 10px 20px;
@@ -601,12 +692,20 @@ header {
 }
 
 .btn-save {
-    background: #2ecc71;
+    background: #28a745;
     color: white;
     border: none;
     padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
+}
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 /* Responsive */
