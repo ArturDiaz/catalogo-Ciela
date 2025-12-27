@@ -3,26 +3,537 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ciela - Tienda, estilo y corazón</title>
+    <title>Ciela - Tienda Online</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Estilos específicos para la vista pública */
+        .tienda-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tienda-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="white" opacity="0.1"/></svg>');
+            background-size: cover;
+        }
+        
+        .tienda-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .tienda-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .admin-link {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.3s;
+            z-index: 1;
+        }
+        
+        .admin-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Filtros de categorías */
+        .categorias-filtro {
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem auto;
+            max-width: 1200px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .categorias-filtro h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .filtros-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        
+        .filtro-btn {
+            padding: 0.5rem 1.5rem;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .filtro-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .filtro-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* Grid de productos */
+        .productos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .producto-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+        
+        .producto-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .producto-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .producto-card:hover .producto-img {
+            transform: scale(1.05);
+        }
+        
+        .producto-info {
+            padding: 1.2rem;
+        }
+        
+        .producto-info h3 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+            font-size: 1.2rem;
+        }
+        
+        .producto-desc {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+            height: 2.8rem;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .producto-precio {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .producto-stock {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .stock-disponible {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .stock-bajo {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .stock-agotado {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .categoria-tag {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            z-index: 1;
+        }
+        
+        /* Mensaje sin productos */
+        .sin-productos {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .sin-productos h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        /* Footer */
+        .tienda-footer {
+            text-align: center;
+            padding: 2rem;
+            background: #f5f5f5;
+            margin-top: 2rem;
+            color: #666;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .tienda-header h1 {
+                font-size: 2rem;
+            }
+            
+            .productos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                padding: 0.5rem;
+            }
+            
+            .filtros-container {
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+                justify-content: flex-start;
+            }
+            
+            .filtro-btn {
+                white-space: nowrap;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .productos-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tienda-header {
+                padding: 1.5rem 1rem;
+            }
+            
+            .admin-link {
+                position: relative;
+                top: 0;
+                right: 0;
+                display: inline-block;
+                margin-top: 1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>✨ Ciela - Tienda, estilo y corazón</h1>
+    <!-- Header de la tienda -->
+    <header class="tienda-header">
         <a href="admin.html" class="admin-link">🔐 Panel Admin</a>
+        <h1>🛍️ Ciela - Tienda Online</h1>
+        <p>Descubre nuestros productos de calidad al mejor precio</p>
     </header>
     
+    <!-- Filtros por categoría -->
+    <div class="categorias-filtro">
+        <h2>📁 Nuestras Categorías</h2>
+        <div class="filtros-container" id="filtros-categorias">
+            <button class="filtro-btn active" data-categoria="todos">
+                Todos los productos
+            </button>
+            <!-- Las categorías se cargarán aquí -->
+        </div>
+    </div>
+    
+    <!-- Grid de productos -->
     <main>
-        <h2>Nuestro Catálogo</h2>
-        <div id="catalogo" class="product-grid">
-            <p>Cargando productos...</p>
+        <div class="productos-grid" id="productos-grid">
+            <div class="sin-productos">
+                <h3>Cargando productos...</h3>
+                <p>Espera un momento por favor</p>
+            </div>
         </div>
     </main>
     
-    <!-- CARGAR EN ESTE ORDEN: -->
-    <!-- ORDEN CORRECTO: -->
+    <!-- Footer -->
+    <footer class="tienda-footer">
+        <p>© 2024 Ciela - Tienda Online. Todos los derechos reservados.</p>
+        <p>🛒 Disfruta de nuestra selección de productos</p>
+    </footer>
+    
+    <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="js/config.js"></script>  <!-- Aquí se crea window.supabase -->
-    <script src="js/public.js"></script>   <!-- Aquí SOLO usa window.supabase -->
+    <script src="js/config.js"></script>
+    <script>
+        // Variables globales
+        let todosProductos = [];
+        let todasCategorias = [];
+        let categoriaActual = 'todos';
+        
+        // Inicializar la tienda
+        async function initTienda() {
+            await waitForSupabase();
+            await cargarCategoriasTienda();
+            await cargarProductosTienda();
+            setupFiltros();
+        }
+        
+        // Esperar a Supabase (similar a admin.js)
+        async function waitForSupabase() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50;
+                
+                const check = () => {
+                    attempts++;
+                    if (window.supabaseClient) {
+                        console.log('✅ Supabase listo para tienda');
+                        resolve();
+                        return;
+                    }
+                    
+                    if (attempts >= maxAttempts) {
+                        console.warn('⚠️ Timeout esperando Supabase');
+                        resolve();
+                        return;
+                    }
+                    
+                    setTimeout(check, 100);
+                };
+                
+                check();
+            });
+        }
+        
+        // Cargar categorías
+        async function cargarCategoriasTienda() {
+            try {
+                const { data: categorias, error } = await window.supabaseClient
+                    .from('categorias')
+                    .select('*')
+                    .order('nombre', { ascending: true });
+                
+                if (error) throw error;
+                
+                todasCategorias = categorias || [];
+                renderizarCategoriasFiltro();
+                
+            } catch (error) {
+                console.error('Error cargando categorías:', error);
+                document.getElementById('filtros-categorias').innerHTML = `
+                    <button class="filtro-btn active" data-categoria="todos">
+                        Todos los productos
+                    </button>
+                    <p style="color: #666; grid-column: 1 / -1; text-align: center;">
+                        No hay categorías disponibles
+                    </p>
+                `;
+            }
+        }
+        
+        // Renderizar botones de categorías
+        function renderizarCategoriasFiltro() {
+            const container = document.getElementById('filtros-categorias');
+            
+            if (todasCategorias.length === 0) {
+                container.innerHTML = `
+                    <button class="filtro-btn active" data-categoria="todos">
+                        Todos los productos
+                    </button>
+                    <p style="color: #666; text-align: center; width: 100%; margin-top: 10px;">
+                        No hay categorías disponibles
+                    </p>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <button class="filtro-btn active" data-categoria="todos">
+                    Todos los productos
+                </button>
+                ${todasCategorias.map(cat => `
+                    <button class="filtro-btn" data-categoria="${cat.id}">
+                        ${cat.nombre}
+                    </button>
+                `).join('')}
+            `;
+            
+            // Re-configurar eventos
+            setupFiltros();
+        }
+        
+        // Cargar productos
+        async function cargarProductosTienda() {
+            try {
+                const { data: productos, error } = await window.supabaseClient
+                    .from('productos')
+                    .select(`
+                        *,
+                        categorias: categoria_id (id, nombre)
+                    `)
+                    .eq('activo', true)  // Solo productos activos
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                todosProductos = productos || [];
+                renderizarProductos();
+                
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+                document.getElementById('productos-grid').innerHTML = `
+                    <div class="sin-productos">
+                        <h3>😕 Error cargando productos</h3>
+                        <p>Por favor intenta más tarde</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Renderizar productos
+        function renderizarProductos() {
+            const grid = document.getElementById('productos-grid');
+            
+            // Filtrar productos por categoría
+            let productosFiltrados = todosProductos;
+            if (categoriaActual !== 'todos') {
+                productosFiltrados = todosProductos.filter(p => 
+                    p.categorias && p.categorias.id === categoriaActual
+                );
+            }
+            
+            // Solo productos con stock positivo o cero
+            productosFiltrados = productosFiltrados.filter(p => p.stock >= 0);
+            
+            if (productosFiltrados.length === 0) {
+                grid.innerHTML = `
+                    <div class="sin-productos">
+                        <h3>📭 No hay productos disponibles</h3>
+                        <p>${categoriaActual === 'todos' 
+                            ? 'Pronto agregaremos nuevos productos.' 
+                            : 'No hay productos en esta categoría.'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = productosFiltrados.map(producto => {
+                // Determinar estado del stock
+                let stockClass = 'stock-disponible';
+                let stockText = `Stock: ${producto.stock}`;
+                
+                if (producto.stock === 0) {
+                    stockClass = 'stock-agotado';
+                    stockText = 'Agotado';
+                } else if (producto.stock < 5) {
+                    stockClass = 'stock-bajo';
+                    stockText = `Pocas unidades: ${producto.stock}`;
+                }
+                
+                // Obtener nombre de categoría
+                const categoriaNombre = producto.categorias?.nombre || 'Sin categoría';
+                
+                return `
+                    <div class="producto-card" data-categoria="${producto.categorias?.id || ''}">
+                        ${producto.categorias?.nombre ? 
+                            `<span class="categoria-tag">${categoriaNombre}</span>` : ''}
+                        
+                        <img src="${producto.imagen_url || 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'}" 
+                             alt="${producto.nombre}" 
+                             class="producto-img"
+                             onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
+                        
+                        <div class="producto-info">
+                            <h3>${producto.nombre}</h3>
+                            <p class="producto-desc">${producto.descripcion || 'Sin descripción disponible'}</p>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="producto-precio">$${producto.precio?.toFixed(2) || '0.00'}</div>
+                                <span class="producto-stock ${stockClass}">${stockText}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Configurar eventos de filtros
+        function setupFiltros() {
+            const botonesFiltro = document.querySelectorAll('.filtro-btn');
+            
+            botonesFiltro.forEach(boton => {
+                boton.addEventListener('click', () => {
+                    // Remover clase active de todos
+                    botonesFiltro.forEach(b => b.classList.remove('active'));
+                    
+                    // Agregar clase active al botón clickeado
+                    boton.classList.add('active');
+                    
+                    // Actualizar categoría actual
+                    categoriaActual = boton.dataset.categoria;
+                    
+                    // Re-renderizar productos
+                    renderizarProductos();
+                    
+                    // Scroll suave hacia los productos
+                    document.querySelector('.productos-grid').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                });
+            });
+        }
+        
+        // Iniciar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', initTienda);
+        
+        // Actualizar productos cada 30 segundos (opcional)
+        setInterval(cargarProductosTienda, 30000);
+        
+    </script>
 </body>
 </html>

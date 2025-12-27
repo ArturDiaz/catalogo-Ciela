@@ -1,15 +1,10 @@
 // js/config.js - VERSIÓN CORREGIDA
 (function() {
-    console.log('🚀 config.js - Conectando a Supabase...');
-    
     // ✅ USAR ESTA URL (DE TU IMAGEN DE CONFIGURACIÓN)
     const SUPABASE_URL = 'https://xkzxforgasbdamgtarcz.supabase.co';
     
     // ✅ CLAVE PÚBLICA COMPLETA (no truncada)
     const SUPABASE_KEY = 'sb_publishable_CJ5yPSBEGz7wgeSmChIWoA_aEMdNOlg'; // Reemplaza con la COMPLETA
-    
-    console.log('📡 URL:', SUPABASE_URL);
-    console.log('🔑 Clave:', SUPABASE_KEY.substring(0, 30) + '...');
     
     if (typeof window.supabase === 'undefined') {
         console.error('❌ Supabase SDK no cargado');
@@ -35,8 +30,6 @@
     
     async function testConexion() {
         try {
-            console.log('🧪 Probando conexión a la API...');
-            
             // Test más simple y seguro
             const { error } = await window.supabaseClient
                 .from('productos')
