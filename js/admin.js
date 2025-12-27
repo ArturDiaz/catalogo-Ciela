@@ -1,4 +1,4 @@
-// js/admin.js - VERSIÓN CON CLOUDINARY Y CATEGORÍAS
+// js/admin.js - VERSIÓN CORREGIDA
 
 // ====================
 // CONFIGURACIÓN CLOUDINARY
@@ -189,9 +189,8 @@ window.agregarCategoria = async function() {
         return;
     }
     
-    // CORRECCIÓN: Usar el botón correcto del formulario de categorías
-    const btn = document.querySelector('.admin-section .btn-primary') || 
-                 document.querySelector('[onclick="agregarCategoria()"]');
+    // CORRECCIÓN: Usar el botón correcto
+    const btn = document.querySelector('[onclick="agregarCategoria()"]');
     const originalText = btn ? btn.textContent : 'Agregar Categoría';
     
     if (btn) {
@@ -272,7 +271,7 @@ window.editarCategoria = async function(categoriaId) {
 };
 
 // ====================
-// GESTIÓN DE PRODUCTOS (ACTUALIZADA CON CATEGORÍAS)
+// GESTIÓN DE PRODUCTOS (CORREGIDO)
 // ====================
 
 window.agregarProducto = async function() {
@@ -310,10 +309,14 @@ window.agregarProducto = async function() {
         producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
     }
     
-    const btn = document.querySelector('#form-producto .btn-primary');
-    const originalText = btn.textContent;
-    btn.textContent = 'Agregando...';
-    btn.disabled = true;
+    // CORRECCIÓN: Usar el botón correcto (está en la sección .add-product)
+    const btn = document.querySelector('.add-product .btn-primary');
+    const originalText = btn ? btn.textContent : 'Agregar Producto';
+    
+    if (btn) {
+        btn.textContent = 'Agregando...';
+        btn.disabled = true;
+    }
     
     try {
         const { data, error } = await window.supabaseClient
@@ -330,8 +333,10 @@ window.agregarProducto = async function() {
     } catch (error) {
         alert('Error: ' + error.message);
     } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     }
 };
 
@@ -468,7 +473,7 @@ window.toggleActivo = async function(productoId, nuevoEstado) {
 };
 
 // ====================
-// EDICIÓN DE PRODUCTOS (ACTUALIZADA CON CATEGORÍAS)
+// EDICIÓN DE PRODUCTOS (CORREGIDO)
 // ====================
 
 window.editarProducto = async function(productoId) {
@@ -535,6 +540,12 @@ function mostrarModalEdicion(producto) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
+// AÑADIR ESTA FUNCIÓN FALTANTE
+window.cerrarModal = function() {
+    const modal = document.getElementById('modal-edicion');
+    if (modal) modal.remove();
+};
+
 window.guardarEdicion = async function(productoId) {
     const producto = {
         nombre: document.getElementById('edit-nombre').value.trim(),
@@ -579,6 +590,75 @@ window.guardarEdicion = async function(productoId) {
         
         alert('✅ Producto actualizado');
         cerrarModal();
+        await cargarProductosAdmin();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+// ====================
+// ACCIONES MASIVAS (AÑADIR ESTAS FUNCIONES FALTANTES)
+// ====================
+
+window.seleccionarTodos = function() {
+    const checkboxes = document.querySelectorAll('.producto-checkbox');
+    const selectAll = document.getElementById('select-all').checked;
+    
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll;
+    });
+};
+
+window.eliminarSeleccionados = async function() {
+    const checkboxes = document.querySelectorAll('.producto-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('Selecciona al menos un producto');
+        return;
+    }
+    
+    const confirmacion = confirm(`¿Eliminar ${checkboxes.length} producto(s)?\nEsta acción no se puede deshacer.`);
+    
+    if (!confirmacion) return;
+    
+    const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
+    
+    try {
+        const { error } = await window.supabaseClient
+            .from('productos')
+            .delete()
+            .in('id', ids);
+        
+        if (error) throw error;
+        
+        alert(`✅ ${ids.length} producto(s) eliminados`);
+        await cargarProductosAdmin();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+window.desactivarSeleccionados = async function() {
+    const checkboxes = document.querySelectorAll('.producto-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('Selecciona al menos un producto');
+        return;
+    }
+    
+    const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
+    
+    try {
+        const { error } = await window.supabaseClient
+            .from('productos')
+            .update({ activo: false })
+            .in('id', ids);
+        
+        if (error) throw error;
+        
+        alert(`✅ ${ids.length} producto(s) desactivados`);
         await cargarProductosAdmin();
         
     } catch (error) {
