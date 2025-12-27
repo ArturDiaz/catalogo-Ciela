@@ -1,10 +1,10 @@
-// js/admin.js - VERSIÓN CON CLOUDINARY INTEGRADO (LIMPIADO)
+// js/admin.js - VERSIÓN CON CLOUDINARY Y CATEGORÍAS
 
 // ====================
 // CONFIGURACIÓN CLOUDINARY
 // ====================
-const CLOUDINARY_CLOUD_NAME = 'dqmlubvqo'; // Cambia esto por tu Cloud Name
-const CLOUDINARY_UPLOAD_PRESET = 'ciela_products'; // Cambia esto por tu Upload Preset
+const CLOUDINARY_CLOUD_NAME = 'dqmlubvqo';
+const CLOUDINARY_UPLOAD_PRESET = 'ciela_products';
 
 // ====================
 // INICIALIZACIÓN
@@ -59,6 +59,7 @@ window.login = async function() {
             document.getElementById('login-form').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'block';
             await cargarProductosAdmin();
+            await cargarCategorias();
         }
         
     } catch (error) {
@@ -78,16 +79,14 @@ window.logout = async function() {
 // ====================
 
 async function subirImagenACloudinary(file) {
-    // Validaciones
     if (!file.type.startsWith('image/')) {
         throw new Error('Solo se permiten imágenes');
     }
     
-    if (file.size > 10 * 1024 * 1024) { // 10MB máximo
+    if (file.size > 10 * 1024 * 1024) {
         throw new Error('Máximo 10MB por imagen');
     }
     
-    // Mostrar loading
     const loading = document.getElementById('loading-imagen');
     if (loading) {
         loading.style.display = 'block';
@@ -95,14 +94,12 @@ async function subirImagenACloudinary(file) {
     }
     
     try {
-        // Crear FormData
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
         formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
         formData.append('folder', 'ciela/productos');
         
-        // Subir a Cloudinary
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
             {
@@ -131,7 +128,144 @@ async function subirImagenACloudinary(file) {
 }
 
 // ====================
-// GESTIÓN DE PRODUCTOS
+// GESTIÓN DE CATEGORÍAS
+// ====================
+
+async function cargarCategorias() {
+    try {
+        const { data: categorias, error } = await window.supabaseClient
+            .from('categorias')
+            .select('*')
+            .order('nombre', { ascending: true });
+        
+        if (error) throw error;
+        
+        window.categorias = categorias || [];
+        
+        // Actualizar lista en formulario de productos
+        const selectCategoria = document.getElementById('categoria');
+        if (selectCategoria) {
+            selectCategoria.innerHTML = `
+                <option value="">Selecciona una categoría</option>
+                ${window.categorias.map(cat => 
+                    `<option value="${cat.id}">${cat.nombre}</option>`
+                ).join('')}
+            `;
+        }
+        
+        // Actualizar lista en sección de gestión de categorías
+        const listaCategorias = document.getElementById('lista-categorias');
+        if (listaCategorias) {
+            if (window.categorias.length === 0) {
+                listaCategorias.innerHTML = '<p class="no-categories">No hay categorías registradas</p>';
+            } else {
+                listaCategorias.innerHTML = window.categorias.map(cat => `
+                    <div class="categoria-item" data-id="${cat.id}">
+                        <span class="categoria-nombre">${cat.nombre}</span>
+                        <div class="categoria-actions">
+                            <button class="btn-edit-small" onclick="editarCategoria('${cat.id}')">✏️</button>
+                            <button class="btn-delete-small" onclick="eliminarCategoria('${cat.id}')">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error cargando categorías:', error);
+        const listaCategorias = document.getElementById('lista-categorias');
+        if (listaCategorias) {
+            listaCategorias.innerHTML = '<p class="error">Error cargando categorías</p>';
+        }
+    }
+}
+
+window.agregarCategoria = async function() {
+    const nombre = document.getElementById('categoria-nombre').value.trim();
+    const descripcion = document.getElementById('categoria-descripcion').value.trim();
+    
+    if (!nombre) {
+        alert('El nombre de la categoría es obligatorio');
+        return;
+    }
+    
+    const btn = document.querySelector('#form-categoria .btn-primary');
+    const originalText = btn.textContent;
+    btn.textContent = 'Agregando...';
+    btn.disabled = true;
+    
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('categorias')
+            .insert([{ 
+                nombre: nombre, 
+                descripcion: descripcion,
+                activa: true 
+            }])
+            .select();
+        
+        if (error) throw error;
+        
+        alert('✅ Categoría agregada exitosamente');
+        document.getElementById('categoria-nombre').value = '';
+        document.getElementById('categoria-descripcion').value = '';
+        await cargarCategorias();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+};
+
+window.eliminarCategoria = async function(categoriaId) {
+    const confirmacion = confirm('¿Estás seguro de eliminar esta categoría?\nLos productos en esta categoría quedarán sin categoría asignada.');
+    
+    if (!confirmacion) return;
+    
+    try {
+        const { error } = await window.supabaseClient
+            .from('categorias')
+            .delete()
+            .eq('id', categoriaId);
+        
+        if (error) throw error;
+        
+        alert('✅ Categoría eliminada');
+        await cargarCategorias();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+window.editarCategoria = async function(categoriaId) {
+    const categoria = window.categorias?.find(c => c.id === categoriaId);
+    if (!categoria) return;
+    
+    const nuevoNombre = prompt('Nuevo nombre de la categoría:', categoria.nombre);
+    
+    if (!nuevoNombre || nuevoNombre.trim() === '') return;
+    
+    try {
+        const { error } = await window.supabaseClient
+            .from('categorias')
+            .update({ nombre: nuevoNombre.trim() })
+            .eq('id', categoriaId);
+        
+        if (error) throw error;
+        
+        alert('✅ Categoría actualizada');
+        await cargarCategorias();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+// ====================
+// GESTIÓN DE PRODUCTOS (ACTUALIZADA CON CATEGORÍAS)
 // ====================
 
 window.agregarProducto = async function() {
@@ -140,6 +274,7 @@ window.agregarProducto = async function() {
         descripcion: document.getElementById('descripcion').value.trim(),
         precio: parseFloat(document.getElementById('precio').value) || 0,
         stock: parseInt(document.getElementById('stock').value) || 0,
+        categoria_id: document.getElementById('categoria').value || null,
         activo: true
     };
     
@@ -168,8 +303,7 @@ window.agregarProducto = async function() {
         producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
     }
     
-    // Deshabilitar botón durante proceso
-    const btn = document.querySelector('#admin-panel .btn-primary');
+    const btn = document.querySelector('#form-producto .btn-primary');
     const originalText = btn.textContent;
     btn.textContent = 'Agregando...';
     btn.disabled = true;
@@ -182,9 +316,9 @@ window.agregarProducto = async function() {
         
         if (error) throw error;
         
-        alert('✅ Producto agregado exitosamente!\nLa imagen ya está en la nube.');
+        alert('✅ Producto agregado exitosamente!');
         await cargarProductosAdmin();
-        limpiarFormulario();
+        limpiarFormularioProducto();
         
     } catch (error) {
         alert('Error: ' + error.message);
@@ -193,6 +327,96 @@ window.agregarProducto = async function() {
         btn.disabled = false;
     }
 };
+
+function limpiarFormularioProducto() {
+    document.getElementById('nombre').value = '';
+    document.getElementById('descripcion').value = '';
+    document.getElementById('precio').value = '';
+    document.getElementById('stock').value = '0';
+    document.getElementById('categoria').value = '';
+    document.getElementById('imagen').value = '';
+    document.getElementById('preview-imagen').innerHTML = `
+        <div class="preview-placeholder">
+            <div class="placeholder-icon">🖼️</div>
+            <p>Vista previa aparecerá aquí</p>
+        </div>
+    `;
+}
+
+async function cargarProductosAdmin() {
+    try {
+        const { data: productos, error } = await window.supabaseClient
+            .from('productos')
+            .select(`
+                *,
+                categorias: categoria_id (nombre)
+            `)
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        window.productosAdmin = productos;
+        
+        const lista = document.getElementById('lista-productos');
+        if (!lista) return;
+        
+        if (productos.length === 0) {
+            lista.innerHTML = '<p class="no-products">No hay productos registrados</p>';
+            return;
+        }
+        
+        lista.innerHTML = productos.map(p => `
+            <div class="producto-admin" data-id="${p.id}">
+                <div class="producto-header">
+                    <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
+                    ${p.imagen_url ? 
+                        `<img src="${p.imagen_url}" alt="${p.nombre}" class="producto-img" 
+                             onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">` 
+                        : 
+                        `<div class="no-image">Sin imagen</div>`
+                    }
+                    <div class="producto-info">
+                        <h3>${p.nombre}</h3>
+                        <p class="producto-desc">${p.descripcion || 'Sin descripción'}</p>
+                        <div class="producto-meta">
+                            <span class="price">$${p.precio?.toFixed(2) || '0.00'}</span>
+                            <span class="stock ${p.stock < 5 ? 'low' : ''}">Stock: ${p.stock}</span>
+                            <span class="categoria-badge">${p.categorias?.nombre || 'Sin categoría'}</span>
+                            <span class="status ${p.activo ? 'active' : 'inactive'}">
+                                ${p.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="producto-actions">
+                    <div class="stock-control">
+                        <button class="btn-minus" onclick="actualizarStock('${p.id}', -1)">-1</button>
+                        <button class="btn-minus" onclick="actualizarStock('${p.id}', -5)">-5</button>
+                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 1)">+1</button>
+                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 5)">+5</button>
+                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 10)">+10</button>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn-edit" onclick="editarProducto('${p.id}')">
+                            ✏️ Editar
+                        </button>
+                        <button class="btn-toggle" onclick="toggleActivo('${p.id}', ${!p.activo})">
+                            ${p.activo ? '⏸️ Desactivar' : '▶️ Activar'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        const lista = document.getElementById('lista-productos');
+        if (lista) {
+            lista.innerHTML = '<p class="error">Error cargando productos</p>';
+        }
+    }
+}
 
 window.actualizarStock = async function(productoId, cambio) {
     try {
@@ -237,165 +461,7 @@ window.toggleActivo = async function(productoId, nuevoEstado) {
 };
 
 // ====================
-// FUNCIONES AUXILIARES
-// ====================
-
-function limpiarFormulario() {
-    document.getElementById('nombre').value = '';
-    document.getElementById('descripcion').value = '';
-    document.getElementById('precio').value = '';
-    document.getElementById('stock').value = '0';
-    document.getElementById('imagen').value = '';
-    document.getElementById('preview-imagen').innerHTML = `
-        <div class="preview-placeholder">
-            <div class="placeholder-icon">🖼️</div>
-            <p>Vista previa aparecerá aquí</p>
-        </div>
-    `;
-}
-
-async function cargarProductosAdmin() {
-    try {
-        const { data: productos, error } = await window.supabaseClient
-            .from('productos')
-            .select('*')
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        window.productosAdmin = productos;
-        
-        const lista = document.getElementById('lista-productos');
-        if (!lista) return;
-        
-        if (productos.length === 0) {
-            lista.innerHTML = '<p class="no-products">No hay productos registrados</p>';
-            return;
-        }
-        
-        lista.innerHTML = productos.map(p => `
-            <div class="producto-admin" data-id="${p.id}">
-                <div class="producto-header">
-                    <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
-                    ${p.imagen_url ? 
-                        `<img src="${p.imagen_url}" alt="${p.nombre}" class="producto-img" 
-                             onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">` 
-                        : 
-                        `<div class="no-image">Sin imagen</div>`
-                    }
-                    <div class="producto-info">
-                        <h3>${p.nombre}</h3>
-                        <p class="producto-desc">${p.descripcion || 'Sin descripción'}</p>
-                        <div class="producto-meta">
-                            <span class="price">$${p.precio?.toFixed(2) || '0.00'}</span>
-                            <span class="stock ${p.stock < 5 ? 'low' : ''}">Stock: ${p.stock}</span>
-                            <span class="status ${p.activo ? 'active' : 'inactive'}">
-                                ${p.activo ? 'Activo' : 'Inactivo'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="producto-actions">
-                    <div class="stock-control">
-                        <button class="btn-minus" onclick="actualizarStock('${p.id}', -1)">-1</button>
-                        <button class="btn-minus" onclick="actualizarStock('${p.id}', -5)">-5</button>
-                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 1)">+1</button>
-                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 5)">+5</button>
-                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 10)">+10</button>
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <button class="btn-edit" onclick="editarProducto('${p.id}')">
-                            ✏️ Editar
-                        </button>
-                        <button class="btn-toggle" onclick="toggleActivo('${p.id}', ${!p.activo})">
-                            ${p.activo ? '⏸️ Desactivar' : '▶️ Activar'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        
-    } catch (error) {
-        const lista = document.getElementById('lista-productos');
-        if (lista) {
-            lista.innerHTML = '<p class="error">Error cargando productos</p>';
-        }
-    }
-}
-
-// ====================
-// ACCIONES MASIVAS
-// ====================
-
-window.seleccionarTodos = function() {
-    const checkboxes = document.querySelectorAll('.producto-checkbox');
-    const selectAll = document.getElementById('select-all').checked;
-    
-    checkboxes.forEach(cb => {
-        cb.checked = selectAll;
-    });
-};
-
-window.eliminarSeleccionados = async function() {
-    const checkboxes = document.querySelectorAll('.producto-checkbox:checked');
-    
-    if (checkboxes.length === 0) {
-        alert('Selecciona al menos un producto');
-        return;
-    }
-    
-    const confirmacion = confirm(`¿Eliminar ${checkboxes.length} producto(s)?\nEsta acción no se puede deshacer.`);
-    
-    if (!confirmacion) return;
-    
-    const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
-    
-    try {
-        const { error } = await window.supabaseClient
-            .from('productos')
-            .delete()
-            .in('id', ids);
-        
-        if (error) throw error;
-        
-        alert(`✅ ${ids.length} producto(s) eliminados`);
-        await cargarProductosAdmin();
-        
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-};
-
-window.desactivarSeleccionados = async function() {
-    const checkboxes = document.querySelectorAll('.producto-checkbox:checked');
-    
-    if (checkboxes.length === 0) {
-        alert('Selecciona al menos un producto');
-        return;
-    }
-    
-    const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
-    
-    try {
-        const { error } = await window.supabaseClient
-            .from('productos')
-            .update({ activo: false })
-            .in('id', ids);
-        
-        if (error) throw error;
-        
-        alert(`✅ ${ids.length} producto(s) desactivados`);
-        await cargarProductosAdmin();
-        
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
-};
-
-// ====================
-// EDICIÓN DE PRODUCTOS
+// EDICIÓN DE PRODUCTOS (ACTUALIZADA CON CATEGORÍAS)
 // ====================
 
 window.editarProducto = async function(productoId) {
@@ -406,6 +472,10 @@ window.editarProducto = async function(productoId) {
 };
 
 function mostrarModalEdicion(producto) {
+    const categoriasOptions = window.categorias?.map(cat => 
+        `<option value="${cat.id}" ${producto.categoria_id === cat.id ? 'selected' : ''}>${cat.nombre}</option>`
+    ).join('') || '';
+    
     const modalHTML = `
         <div class="modal-overlay" id="modal-edicion">
             <div class="modal-content">
@@ -419,6 +489,14 @@ function mostrarModalEdicion(producto) {
                     <textarea id="edit-descripcion" placeholder="Descripción">${producto.descripcion || ''}</textarea>
                     <input type="number" id="edit-precio" value="${producto.precio}" step="0.01" placeholder="Precio *" required>
                     <input type="number" id="edit-stock" value="${producto.stock}" placeholder="Stock">
+                    
+                    <div class="form-group">
+                        <label for="edit-categoria">Categoría:</label>
+                        <select id="edit-categoria">
+                            <option value="">Sin categoría</option>
+                            ${categoriasOptions}
+                        </select>
+                    </div>
                     
                     <div class="imagen-upload">
                         <label>Imagen actual:</label>
@@ -450,23 +528,18 @@ function mostrarModalEdicion(producto) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-window.cerrarModal = function() {
-    const modal = document.getElementById('modal-edicion');
-    if (modal) modal.remove();
-};
-
 window.guardarEdicion = async function(productoId) {
     const producto = {
         nombre: document.getElementById('edit-nombre').value.trim(),
         descripcion: document.getElementById('edit-descripcion').value.trim(),
         precio: parseFloat(document.getElementById('edit-precio').value) || 0,
-        stock: parseInt(document.getElementById('edit-stock').value) || 0
+        stock: parseInt(document.getElementById('edit-stock').value) || 0,
+        categoria_id: document.getElementById('edit-categoria').value || null
     };
     
     const imagenInput = document.getElementById('edit-imagen');
     const productoOriginal = window.productosAdmin?.find(p => p.id === productoId);
     
-    // Validaciones
     if (!producto.nombre) {
         alert('El nombre es obligatorio');
         return;
@@ -520,10 +593,11 @@ async function verificarSesion() {
             document.getElementById('login-form').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'block';
             await cargarProductosAdmin();
+            await cargarCategorias();
         }
         
     } catch (error) {
-        // Sesión no válida o error, mostrar formulario de login
+        // Sesión no válida
     }
 }
 
@@ -536,10 +610,9 @@ async function initAdmin() {
     await verificarSesion();
 }
 
-// Iniciar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', initAdmin);
 
-// Estilos adicionales para la carga
+// Estilos adicionales
 const style = document.createElement('style');
 style.textContent = `
     #loading-imagen {
@@ -552,6 +625,61 @@ style.textContent = `
     
     #loading-imagen div {
         animation: pulse 1.5s infinite;
+    }
+    
+    .categoria-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 15px;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 5px;
+        margin-bottom: 8px;
+    }
+    
+    .categoria-nombre {
+        font-weight: 500;
+        color: #333;
+    }
+    
+    .categoria-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .btn-edit-small, .btn-delete-small {
+        padding: 4px 8px;
+        font-size: 12px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+    
+    .btn-edit-small {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .btn-delete-small {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+    
+    .categoria-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+    }
+    
+    .no-categories {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 5px;
     }
     
     @keyframes pulse {

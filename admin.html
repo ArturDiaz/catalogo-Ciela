@@ -43,6 +43,9 @@
                         <button type="button" class="stock-btn plus" onclick="ajustarStock('stock', 1)">+</button>
                     </div>
                 </div>
+                <select id="categoria" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="">Selecciona una categoría</option>
+                </select>
                 
                 <div class="image-upload">
                     <label for="imagen" class="upload-label">
@@ -63,13 +66,6 @@
                     
                     <div id="loading-imagen" class="upload-loading" style="display:none;"></div>
                     
-                    <div class="upload-info">
-                        <p><strong>Las imágenes se guardarán en:</strong></p>
-                        <code>/img/productos/producto_001.jpg</code>
-                        <code>/img/productos/producto_002.jpg</code>
-                        <code>/img/productos/producto_003.jpg</code>
-                        <p>...y así sucesivamente</p>
-                    </div>
                 </div>
                 
                 <button onclick="agregarProducto()" class="btn-primary">Agregar Producto</button>
@@ -99,7 +95,21 @@
                     <p>Cargando productos...</p>
                 </div>
             </section>
+            
+            <div class="admin-section">
+                <h2>📁 Gestión de Categorías</h2>
+                <div class="form-container">
+                    <input type="text" id="categoria-nombre" placeholder="Nombre de categoría *" required>
+                    <textarea id="categoria-descripcion" placeholder="Descripción (opcional)"></textarea>
+                    <button class="btn-primary" onclick="agregarCategoria()">➕ Agregar Categoría</button>
+                </div>
+                
+                <div class="categories-list" id="lista-categorias">
+                    <!-- Las categorías se cargarán aquí -->
+                </div>
+            </div>
         </main>
+
     </div>
     
     <!-- SCRIPTS -->
