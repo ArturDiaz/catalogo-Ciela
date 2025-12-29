@@ -7,6 +7,13 @@
     --c-pink-hover: #830a48;
     --c-pink-100: #381131;
 
+    --c-action-10: #fff0f8;
+	--c-action-20: #ffe3f9;
+	--c-action-30: #ffc6f3;
+	--c-action-40: #ff98f8;
+	--c-action: #fd009e;
+	--c-action-hover: #ff27c0;
+
     --c-scale-10: #f3f5fa;
 	--c-scale-20: #e9ecf6;
 	--c-scale-30: #d7daee;
@@ -32,7 +39,7 @@ body {
     margin: 0;
     padding: 0;
     background: #f5f7fa;
-    color: #333;
+    color: var(--c-scale-80);
 }
 
 /* ===== Flex Box ======*/
@@ -619,58 +626,137 @@ body {
     border-radius: 5px;
 }
 
+/* Botones */
+.btn-sm {
+    font-size: 1.2rem;
+}
+.ct-btn-rect,
+.ct-btn{
+    height: 40px;
+    width: fit-content;
+	max-height: 40px;
+    font-size: 1em;
+    border-radius: 10px;
+    border: none;
+    text-align: center;
+    padding: 12px 24px;
+	text-wrap: nowrap;
+    cursor: pointer;
+	transition: all .3s ease;
+    line-height: 1.5;
+	&:hover,
+	&:focus,
+	&:active{
+        text-decoration: none;
+		outline: 0;
+        transition: all .3s ease;
+    }
+    @media (min-width:820px){
+        font-size: 13px;
+    }
+
+    @media (min-width: 992px) {
+        width: fit-content;
+    }
+    @media (min-width: 600px) {
+        width: fit-content;
+    }
+}
+
 .btn-primary {
     background: var(--c-pink);
     color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    width: fit-content;
-    transition: background 0.3s;
+    &:hover {
+        background: var(--c-pink-hover);
+        color: white;
+    }
 }
 
-.btn-primary:hover {
-    background: #27ae60;
-}
 
 .btn-primary:disabled {
-    background: #95a5a6;
+    background: var(--c-scale-50);
     cursor: not-allowed;
 }
+.btn-yellow-pastel{
+    background: var(--c-yellow-10);
+    color: var(--c-yellow);
+    &:hover{
+        background: var(--c-yellow-20);
+        color: var(--c-yellow);
+    }
+}
+.btn-cyan-pastel{
+    background: var(--c-cyan-10);
+    color: var(--c-cyan-hover);
+    &:hover{
+        background: var(--c-cyan-20);
+        color: var(--c-cyan-hover);
+    }
+}
+.btn-orange-pastel{
+    background: var(--c-orange-10);
+    color: var(--c-orange);
+    &:hover{
+        background: var(--c-orange-20);
+        color: var(--c-orange);
+    }
+}
+.btn-green-pastel{
+    background: var(--c-green-10);
+    color: var(--c-green);
+    &:hover{
+        background: var(--c-green-20);
+        color: var(--c-green);
+    }
+}
+.btn-pink-pastel{
+    background: var(--c-action-10);
+    color: var(--c-action);
+    &:hover{
+        background: var(--c-action-20);
+        color: var(--c-action);
+    }
+}
+.btn-red-pastel{
+    background: var(--c-red-10);
+    color: var(--c-red);
+    &:hover{
+        background: var(--c-red-20);
+        color: var(--c-red);
+    }
+}
 
-.ct-btn-scale-10{
+.btn-scale-10{
     background: var(--c-scale-10);
     color: var(--c-scale-80);
     &:hover, &:active, &:focus{background: var(--c-scale-20);}
 }
-.ct-btn-scale-20{
+.btn-scale-20{
     background: var(--c-scale-20);
     color: var(--c-scale-80);
     &:hover, &:active, &:focus{background: var(--c-scale-30);}
 }
-.ct-btn-scale-30{
+.btn-scale-30{
     background: var(--c-scale-30);
     color: var(--c-scale-80);
     &:hover, &:active, &:focus{background: var(--c-scale-40);}
 }
-.ct-btn-scale-40{
+.btn-scale-40{
     background: var(--c-scale-40);
     color: var(--c-blanco);
     &:hover, &:active, &:focus{background: var(--c-scale-50);}
 }
-.ct-btn-scale-50{
+.btn-scale-50{
     background: var(--c-scale-50);
     color: var(--c-blanco);
     &:hover, &:active, &:focus{background: var(--c-scale-60);}
 }
-.ct-btn-scale-60{
+.btn-scale-60{
     background: var(--c-scale-60);
     color: var(--c-blanco);
     &:hover, &:active, &:focus{background: var(--c-scale-70);}
 }
-.ct-btn-scale-70{
+.btn-scale-70{
     background: var(--c-scale-70);
     color: var(--c-blanco);
     &:hover, &:active, &:focus{background: var(--c-scale-80);}
@@ -1450,6 +1536,10 @@ body {
     background: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
     color: white;
+}
+.nav-pills .nav-link{
+    background:var(--c-scale-20);
+    color: var(--c-scale-80);
 }
 
 /* Filtros de categorías */
