@@ -6,7 +6,6 @@
     <title>Ciela - Panel de Administración</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
-        /* Estilos adicionales específicos para admin */
         .preview-container {
             display: flex;
             flex-wrap: wrap;
@@ -157,9 +156,9 @@
                     <option value="">Selecciona una categoría</option>
                 </select>
                 
-                <!-- NUEVO: Input para múltiples imágenes -->
+                <!-- INPUT PARA MÚLTIPLES IMÁGENES -->
                 <div class="image-upload">
-                    <label for="imagenes" class="upload-label">
+                    <label for="imagenes" class="upload-label" onclick="document.getElementById('imagenes').click()">
                         <div class="upload-icon">📸</div>
                         <div class="upload-text">
                             <strong>Seleccionar múltiples imágenes</strong>
@@ -167,9 +166,11 @@
                             <small>Primera imagen será la principal</small>
                         </div>
                     </label>
-                    <input type="file" id="imagenes" accept="image/*" multiple>
+                    <input type="file" id="imagenes" accept="image/*" multiple 
+                           style="display: none"
+                           onchange="previewImagenesMultiples(this)">
                     
-                    <!-- Vista previa de múltiples imágenes -->
+                    <!-- VISTA PREVIA DE MÚLTIPLES IMÁGENES -->
                     <div id="preview-imagenes" class="preview-container">
                         <div class="preview-placeholder">
                             <div class="placeholder-icon">🖼️</div>

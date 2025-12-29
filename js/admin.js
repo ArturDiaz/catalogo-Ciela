@@ -1,4 +1,4 @@
-// js/admin.js - VERSIÓN CORREGIDA
+// js/admin.js - VERSIÓN FINAL CON MÚLTIPLES IMÁGENES
 
 // ====================
 // CONFIGURACIÓN CLOUDINARY
@@ -9,7 +9,6 @@ const CLOUDINARY_UPLOAD_PRESET = 'ciela_products';
 // ====================
 // INICIALIZACIÓN
 // ====================
-
 async function waitForSupabase() {
     return new Promise((resolve) => {
         let attempts = 0;
@@ -35,9 +34,120 @@ async function waitForSupabase() {
 }
 
 // ====================
+// MANEJO DE MÚLTIPLES IMÁGENES
+// ====================
+let imagenesTemporales = [];
+
+window.previewImagenesMultiples = function(input) {
+    const previewContainer = document.getElementById('preview-imagenes');
+    
+    if (!input.files || input.files.length === 0) {
+        return;
+    }
+    
+    previewContainer.innerHTML = '';
+    imagenesTemporales = [];
+    
+    Array.from(input.files).forEach((file, index) => {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            imagenesTemporales.push({
+                file: file,
+                previewUrl: e.target.result,
+                orden: index + 1
+            });
+            
+            const previewItem = document.createElement('div');
+            previewItem.className = 'imagen-preview-item';
+            previewItem.innerHTML = `
+                <img src="${e.target.result}" alt="Previsualización ${index + 1}">
+                <div class="imagen-info">
+                    <div style="font-size: 11px; margin-bottom: 2px;">${file.name}</div>
+                    <div class="orden-control">
+                        <span>Orden:</span>
+                        <input type="number" class="orden-input" 
+                               data-index="${index}" 
+                               value="${index + 1}" 
+                               min="1" max="${input.files.length}"
+                               onchange="actualizarOrdenImagen(${index}, this.value)">
+                    </div>
+                    <button type="button" class="btn-remove-imagen" 
+                            onclick="eliminarImagenTemporal(${index})">
+                        ✕ Eliminar
+                    </button>
+                </div>
+            `;
+            
+            previewContainer.appendChild(previewItem);
+        };
+        
+        reader.readAsDataURL(file);
+    });
+};
+
+window.actualizarOrdenImagen = function(index, nuevoOrden) {
+    const imagen = imagenesTemporales[index];
+    if (imagen) {
+        imagen.orden = parseInt(nuevoOrden);
+        reordenarVistaPrevia();
+    }
+};
+
+function reordenarVistaPrevia() {
+    const previewContainer = document.getElementById('preview-imagenes');
+    if (!previewContainer) return;
+    
+    imagenesTemporales.sort((a, b) => a.orden - b.orden);
+    
+    previewContainer.innerHTML = '';
+    imagenesTemporales.forEach((imagen, index) => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'imagen-preview-item';
+        previewItem.innerHTML = `
+            <img src="${imagen.previewUrl}" alt="Previsualización ${imagen.orden}">
+            <div class="imagen-info">
+                <div style="font-size: 11px; margin-bottom: 2px;">${imagen.file.name}</div>
+                <div class="orden-control">
+                    <span>Orden:</span>
+                    <input type="number" class="orden-input" 
+                           data-index="${index}" 
+                           value="${imagen.orden}" 
+                           min="1" max="${imagenesTemporales.length}"
+                           onchange="actualizarOrdenImagen(${index}, this.value)">
+                </div>
+                <button type="button" class="btn-remove-imagen" 
+                        onclick="eliminarImagenTemporal(${index})">
+                    ✕ Eliminar
+                </button>
+            </div>
+        `;
+        previewContainer.appendChild(previewItem);
+    });
+};
+
+window.eliminarImagenTemporal = function(index) {
+    imagenesTemporales.splice(index, 1);
+    
+    imagenesTemporales.forEach((img, i) => {
+        img.orden = i + 1;
+    });
+    
+    const input = document.getElementById('imagenes');
+    if (input) {
+        const dt = new DataTransfer();
+        imagenesTemporales.forEach(img => {
+            dt.items.add(img.file);
+        });
+        input.files = dt.files;
+    }
+    
+    reordenarVistaPrevia();
+};
+
+// ====================
 // AUTENTICACIÓN
 // ====================
-
 window.login = async function() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
@@ -77,7 +187,6 @@ window.logout = async function() {
 // ====================
 // FUNCIÓN PARA SUBIR A CLOUDINARY
 // ====================
-
 async function subirImagenACloudinary(file) {
     if (!file.type.startsWith('image/')) {
         throw new Error('Solo se permiten imágenes');
@@ -130,7 +239,6 @@ async function subirImagenACloudinary(file) {
 // ====================
 // GESTIÓN DE CATEGORÍAS
 // ====================
-
 async function cargarCategorias() {
     try {
         const { data: categorias, error } = await window.supabaseClient
@@ -142,7 +250,6 @@ async function cargarCategorias() {
         
         window.categorias = categorias || [];
         
-        // Actualizar lista en formulario de productos
         const selectCategoria = document.getElementById('categoria');
         if (selectCategoria) {
             selectCategoria.innerHTML = `
@@ -153,7 +260,6 @@ async function cargarCategorias() {
             `;
         }
         
-        // Actualizar lista en sección de gestión de categorías
         const listaCategorias = document.getElementById('lista-categorias');
         if (listaCategorias) {
             if (window.categorias.length === 0) {
@@ -172,7 +278,6 @@ async function cargarCategorias() {
         }
         
     } catch (error) {
-        console.error('Error cargando categorías:', error);
         const listaCategorias = document.getElementById('lista-categorias');
         if (listaCategorias) {
             listaCategorias.innerHTML = '<p class="error">Error cargando categorías</p>';
@@ -189,7 +294,6 @@ window.agregarCategoria = async function() {
         return;
     }
     
-    // CORRECCIÓN: Usar el botón correcto
     const btn = document.querySelector('[onclick="agregarCategoria()"]');
     const originalText = btn ? btn.textContent : 'Agregar Categoría';
     
@@ -271,9 +375,8 @@ window.editarCategoria = async function(categoriaId) {
 };
 
 // ====================
-// GESTIÓN DE PRODUCTOS (CORREGIDO)
+// GESTIÓN DE PRODUCTOS CON MÚLTIPLES IMÁGENES
 // ====================
-
 window.agregarProducto = async function() {
     const producto = {
         nombre: document.getElementById('nombre').value.trim(),
@@ -284,7 +387,6 @@ window.agregarProducto = async function() {
         activo: true
     };
     
-    // Validaciones
     if (!producto.nombre) {
         alert('El nombre es obligatorio');
         return;
@@ -295,40 +397,60 @@ window.agregarProducto = async function() {
         return;
     }
     
-    const imagenInput = document.getElementById('imagen');
-    
-    if (imagenInput.files && imagenInput.files[0]) {
-        try {
-            const imagenData = await subirImagenACloudinary(imagenInput.files[0]);
-            producto.imagen_url = imagenData.url;
-        } catch (error) {
-            alert('Error subiendo imagen: ' + error.message);
-            producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
-        }
-    } else {
-        producto.imagen_url = 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg';
-    }
-    
-    // CORRECCIÓN: Usar el botón correcto (está en la sección .add-product)
     const btn = document.querySelector('.add-product .btn-primary');
     const originalText = btn ? btn.textContent : 'Agregar Producto';
     
     if (btn) {
-        btn.textContent = 'Agregando...';
+        btn.textContent = 'Procesando...';
         btn.disabled = true;
     }
     
     try {
-        const { data, error } = await window.supabaseClient
+        const { data: productoInsertado, error: productoError } = await window.supabaseClient
             .from('productos')
             .insert([producto])
-            .select();
+            .select()
+            .single();
         
-        if (error) throw error;
+        if (productoError) throw productoError;
+        
+        if (imagenesTemporales.length > 0) {
+            const imagenesPromises = imagenesTemporales.map(async (imagenTemp, index) => {
+                try {
+                    const imagenData = await subirImagenACloudinary(imagenTemp.file);
+                    
+                    const { error: imagenError } = await window.supabaseClient
+                        .from('producto_imagenes')
+                        .insert({
+                            producto_id: productoInsertado.id,
+                            imagen_url: imagenData.url,
+                            orden: imagenTemp.orden
+                        });
+                    
+                    if (imagenError) {
+                        return null;
+                    }
+                    
+                    return { url: imagenData.url, orden: imagenTemp.orden };
+                    
+                } catch (error) {
+                    return null;
+                }
+            });
+            
+            await Promise.all(imagenesPromises);
+        } else {
+            await window.supabaseClient
+                .from('productos')
+                .update({ 
+                    imagen_url: 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'
+                })
+                .eq('id', productoInsertado.id);
+        }
         
         alert('✅ Producto agregado exitosamente!');
         await cargarProductosAdmin();
-        limpiarFormularioProducto();
+        limpiarFormularioProductoCompleto();
         
     } catch (error) {
         alert('Error: ' + error.message);
@@ -340,19 +462,26 @@ window.agregarProducto = async function() {
     }
 };
 
-function limpiarFormularioProducto() {
+function limpiarFormularioProductoCompleto() {
     document.getElementById('nombre').value = '';
     document.getElementById('descripcion').value = '';
     document.getElementById('precio').value = '';
     document.getElementById('stock').value = '0';
     document.getElementById('categoria').value = '';
-    document.getElementById('imagen').value = '';
-    document.getElementById('preview-imagen').innerHTML = `
-        <div class="preview-placeholder">
-            <div class="placeholder-icon">🖼️</div>
-            <p>Vista previa aparecerá aquí</p>
-        </div>
-    `;
+    document.getElementById('imagenes').value = '';
+    
+    const previewContainer = document.getElementById('preview-imagenes');
+    if (previewContainer) {
+        previewContainer.innerHTML = `
+            <div class="preview-placeholder">
+                <div class="placeholder-icon">🖼️</div>
+                <p>Arrastra o selecciona múltiples imágenes</p>
+                <small>Primera imagen será la principal</small>
+            </div>
+        `;
+    }
+    
+    imagenesTemporales = [];
 }
 
 async function cargarProductosAdmin() {
@@ -361,7 +490,8 @@ async function cargarProductosAdmin() {
             .from('productos')
             .select(`
                 *,
-                categorias: categoria_id (nombre)
+                categorias: categoria_id (nombre),
+                imagenes:producto_imagenes (imagen_url, orden)
             `)
             .order('created_at', { ascending: false });
         
@@ -377,50 +507,70 @@ async function cargarProductosAdmin() {
             return;
         }
         
-        lista.innerHTML = productos.map(p => `
-            <div class="producto-admin" data-id="${p.id}">
-                <div class="producto-header">
-                    <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
-                    ${p.imagen_url ? 
-                        `<img src="${p.imagen_url}" alt="${p.nombre}" class="producto-img" 
-                             onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">` 
-                        : 
-                        `<div class="no-image">Sin imagen</div>`
-                    }
-                    <div class="producto-info">
-                        <h3>${p.nombre}</h3>
-                        <p class="producto-desc">${p.descripcion || 'Sin descripción'}</p>
-                        <div class="producto-meta">
-                            <span class="price">$${p.precio?.toFixed(2) || '0.00'}</span>
-                            <span class="stock ${p.stock < 5 ? 'low' : ''}">Stock: ${p.stock}</span>
-                            <span class="categoria-badge">${p.categorias?.nombre || 'Sin categoría'}</span>
-                            <span class="status ${p.activo ? 'active' : 'inactive'}">
-                                ${p.activo ? 'Activo' : 'Inactivo'}
-                            </span>
+        lista.innerHTML = productos.map(p => {
+            const imagenes = p.imagenes || [];
+            const imagenPrincipal = imagenes.length > 0 ? 
+                imagenes.find(img => img.orden === 1)?.imagen_url || imagenes[0].imagen_url : 
+                p.imagen_url;
+            
+            let imagenesHTML = '';
+            if (imagenes.length > 0) {
+                const mostrarPrimeras = Math.min(imagenes.length, 3);
+                imagenesHTML = `
+                    <div class="producto-imagenes-carousel">
+                        ${imagenes.slice(0, mostrarPrimeras).map(img => 
+                            `<img src="${img.imagen_url}" 
+                                  class="producto-img-mini" 
+                                  alt="Imagen ${img.orden}"
+                                  onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">`
+                        ).join('')}
+                        ${imagenes.length > 3 ? 
+                            `<div class="mas-imagenes">+${imagenes.length - 3}</div>` : ''}
+                    </div>
+                    <div class="imagenes-count">${imagenes.length} imagen(es)</div>
+                `;
+            }
+            
+            return `
+                <div class="producto-admin" data-id="${p.id}">
+                    <div class="producto-header">
+                        <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
+                        ${imagenesHTML}
+                        <div class="producto-info">
+                            <h3>${p.nombre}</h3>
+                            <p class="producto-desc">${p.descripcion || 'Sin descripción'}</p>
+                            <div class="producto-meta">
+                                <span class="price">$${p.precio?.toFixed(2) || '0.00'}</span>
+                                <span class="stock ${p.stock < 5 ? 'low' : ''}">Stock: ${p.stock}</span>
+                                <span class="categoria-badge">${p.categorias?.nombre || 'Sin categoría'}</span>
+                                <span class="status ${p.activo ? 'active' : 'inactive'}">
+                                    ${p.activo ? 'Activo' : 'Inactivo'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="producto-actions">
+                        <div class="stock-control">
+                            <button class="btn-minus" onclick="actualizarStock('${p.id}', -1)">-1</button>
+                            <button class="btn-minus" onclick="actualizarStock('${p.id}', -5)">-5</button>
+                            <button class="btn-plus" onclick="actualizarStock('${p.id}', 1)">+1</button>
+                            <button class="btn-plus" onclick="actualizarStock('${p.id}', 5)">+5</button>
+                            <button class="btn-plus" onclick="actualizarStock('${p.id}', 10)">+10</button>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn-edit" onclick="editarProducto('${p.id}')">
+                                ✏️ Editar
+                            </button>
+                            <button class="btn-toggle" onclick="toggleActivo('${p.id}', ${!p.activo})">
+                                ${p.activo ? '⏸️ Desactivar' : '▶️ Activar'}
+                            </button>
                         </div>
                     </div>
                 </div>
-                
-                <div class="producto-actions">
-                    <div class="stock-control">
-                        <button class="btn-minus" onclick="actualizarStock('${p.id}', -1)">-1</button>
-                        <button class="btn-minus" onclick="actualizarStock('${p.id}', -5)">-5</button>
-                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 1)">+1</button>
-                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 5)">+5</button>
-                        <button class="btn-plus" onclick="actualizarStock('${p.id}', 10)">+10</button>
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <button class="btn-edit" onclick="editarProducto('${p.id}')">
-                            ✏️ Editar
-                        </button>
-                        <button class="btn-toggle" onclick="toggleActivo('${p.id}', ${!p.activo})">
-                            ${p.activo ? '⏸️ Desactivar' : '▶️ Activar'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         
     } catch (error) {
         const lista = document.getElementById('lista-productos');
@@ -473,9 +623,8 @@ window.toggleActivo = async function(productoId, nuevoEstado) {
 };
 
 // ====================
-// EDICIÓN DE PRODUCTOS (CORREGIDO)
+// EDICIÓN DE PRODUCTOS
 // ====================
-
 window.editarProducto = async function(productoId) {
     const producto = window.productosAdmin?.find(p => p.id === productoId);
     if (!producto) return;
@@ -540,7 +689,6 @@ function mostrarModalEdicion(producto) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-// AÑADIR ESTA FUNCIÓN FALTANTE
 window.cerrarModal = function() {
     const modal = document.getElementById('modal-edicion');
     if (modal) modal.remove();
@@ -598,9 +746,8 @@ window.guardarEdicion = async function(productoId) {
 };
 
 // ====================
-// ACCIONES MASIVAS (AÑADIR ESTAS FUNCIONES FALTANTES)
+// ACCIONES MASIVAS
 // ====================
-
 window.seleccionarTodos = function() {
     const checkboxes = document.querySelectorAll('.producto-checkbox');
     const selectAll = document.getElementById('select-all').checked;
@@ -669,7 +816,6 @@ window.desactivarSeleccionados = async function() {
 // ====================
 // VERIFICACIÓN DE SESIÓN
 // ====================
-
 async function verificarSesion() {
     try {
         const { data: { session }, error } = await window.supabaseClient.auth.getSession();
@@ -691,7 +837,6 @@ async function verificarSesion() {
 // ====================
 // INICIALIZACIÓN
 // ====================
-
 async function initAdmin() {
     await waitForSupabase();
     await verificarSesion();

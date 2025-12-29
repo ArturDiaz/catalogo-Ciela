@@ -13,7 +13,6 @@
     
     <link rel="stylesheet" href="css/styles.css">
     <style>
-        /* Estilos específicos para la vista pública */
         .tienda-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -58,7 +57,6 @@
             color: white;
         }
         
-        /* Filtros de categorías */
         .categorias-filtro {
             background: white;
             padding: 1.5rem;
@@ -100,7 +98,6 @@
             box-shadow: 0 4px 10px rgba(102, 126, 234, 0.2);
         }
         
-        /* Grid de productos */
         .productos-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -244,7 +241,6 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
         
-        /* Modal personalizado */
         .modal-producto .modal-content {
             border-radius: 20px;
             overflow: hidden;
@@ -267,12 +263,11 @@
             padding: 2rem;
         }
         
-        .modal-producto .modal-imagen {
-            width: 100%;
-            height: 300px;
-            object-fit: cover;
+        .modal-producto .carousel-inner img {
+            max-height: 400px;
+            object-fit: contain;
+            background: #f8f9fa;
             border-radius: 10px;
-            margin-bottom: 1.5rem;
         }
         
         .modal-producto .modal-descripcion {
@@ -345,7 +340,6 @@
             box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3);
         }
         
-        /* Mensaje sin productos */
         .sin-productos {
             grid-column: 1 / -1;
             text-align: center;
@@ -360,7 +354,6 @@
             font-weight: 600;
         }
         
-        /* Footer */
         .tienda-footer {
             text-align: center;
             padding: 2.5rem;
@@ -374,11 +367,65 @@
             opacity: 0.9;
         }
         
-        /* Responsive */
+        .carrusel-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin-bottom: 3rem;
+            padding: 3rem 1rem;
+        }
+        
+        .carousel-producto {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            background: white;
+            min-height: 400px;
+            border-radius: 15px;
+        }
+        
+        .carousel-image {
+            height: 300px;
+            object-fit: cover;
+            width: 100%;
+            border-radius: 10px;
+        }
+        
+        .carousel-indicators button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #667eea;
+            opacity: 0.5;
+        }
+        
+        .carousel-indicators button.active {
+            opacity: 1;
+        }
+        
+        .carousel-control-prev,
+        .carousel-control-next {
+            width: 40px;
+            height: 40px;
+            background: rgba(102, 126, 234, 0.8);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0 20px;
+        }
+        
         @media (max-width: 992px) {
             .productos-grid {
                 grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                 gap: 1.5rem;
+            }
+            
+            .carousel-producto {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .carousel-image {
+                height: 250px;
             }
         }
         
@@ -403,10 +450,6 @@
                 display: inline-block;
                 margin-top: 1rem;
             }
-            
-            .modal-producto .modal-imagen {
-                height: 250px;
-            }
         }
         
         @media (max-width: 576px) {
@@ -429,7 +472,6 @@
             }
         }
         
-        /* Animación para el modal */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
@@ -453,13 +495,12 @@
     </header>
 
     <!-- Carrusel de productos destacados -->
-    <section class="carrusel-section py-5">
+    <section class="carrusel-section">
         <div class="container">
             <h2 class="text-center mb-4">🌟 Productos Destacados</h2>
             <p class="text-center mb-5">Descubre nuestras mejores creaciones</p>
             
             <div id="carrusel-productos" class="carousel-container">
-                <!-- El contenido se cargará dinámicamente desde carousel.js -->
                 <div class="text-center">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Cargando...</span>
@@ -470,11 +511,6 @@
         </div>
     </section>
 
-    <!-- Luego siguen los filtros y grid normal -->
-    <div class="container">
-        <div class="categorias-filtro">
-            <!-- ... el resto de tu código existente ... -->
-    
     <!-- Filtros por categoría -->
     <div class="container">
         <div class="categorias-filtro">
@@ -483,7 +519,6 @@
                 <button class="filtro-btn active" data-categoria="todos">
                     <i class="bi bi-grid"></i> Todos los productos
                 </button>
-                <!-- Las categorías se cargarán aquí -->
             </div>
         </div>
     </div>
@@ -517,13 +552,14 @@
         let todosProductos = [];
         let todasCategorias = [];
         let categoriaActual = 'todos';
-        let telefonoWhatsApp = '948064264'; // Cambia este número
+        let telefonoWhatsApp = '948064264';
         
         // Inicializar la tienda
         async function initTienda() {
             await waitForSupabase();
             await cargarCategoriasTienda();
             await cargarProductosTienda();
+            await cargarCarruselDestacados();
             setupFiltros();
         }
         
@@ -536,13 +572,11 @@
                 const check = () => {
                     attempts++;
                     if (window.supabaseClient) {
-                        console.log('✅ Supabase listo para tienda');
                         resolve();
                         return;
                     }
                     
                     if (attempts >= maxAttempts) {
-                        console.warn('⚠️ Timeout esperando Supabase');
                         resolve();
                         return;
                     }
@@ -568,7 +602,6 @@
                 renderizarCategoriasFiltro();
                 
             } catch (error) {
-                console.error('Error cargando categorías:', error);
                 document.getElementById('filtros-categorias').innerHTML = `
                     <button class="filtro-btn active" data-categoria="todos">
                         <i class="bi bi-grid"></i> Todos los productos
@@ -607,20 +640,20 @@
                 `).join('')}
             `;
             
-            // Re-configurar eventos
             setupFiltros();
         }
         
-        // Cargar productos
+        // Cargar productos con imágenes múltiples
         async function cargarProductosTienda() {
             try {
                 const { data: productos, error } = await window.supabaseClient
                     .from('productos')
                     .select(`
                         *,
-                        categorias: categoria_id (id, nombre)
+                        categorias: categoria_id (id, nombre),
+                        imagenes:producto_imagenes (imagen_url, orden)
                     `)
-                    .eq('activo', true)  // Solo productos activos
+                    .eq('activo', true)
                     .order('created_at', { ascending: false });
                 
                 if (error) throw error;
@@ -629,7 +662,6 @@
                 renderizarProductos();
                 
             } catch (error) {
-                console.error('Error cargando productos:', error);
                 document.getElementById('productos-grid').innerHTML = `
                     <div class="sin-productos">
                         <h3><i class="bi bi-emoji-frown"></i> Error cargando productos</h3>
@@ -639,11 +671,103 @@
             }
         }
         
-        // Renderizar productos
+        // Carrusel de productos destacados
+        async function cargarCarruselDestacados() {
+            try {
+                const { data: productos, error } = await window.supabaseClient
+                    .from('productos')
+                    .select(`
+                        *,
+                        categorias: categoria_id (nombre),
+                        imagenes:producto_imagenes (imagen_url, orden)
+                    `)
+                    .eq('activo', true)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+                
+                if (error) throw error;
+                
+                if (!productos || productos.length === 0) {
+                    document.getElementById('carrusel-productos').innerHTML = `
+                        <div class="text-center">
+                            <p>No hay productos destacados disponibles</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const carruselHTML = productos.map((producto, index) => {
+                    const imagenes = producto.imagenes || [];
+                    const imagenPrincipal = imagenes.length > 0 ? 
+                        imagenes.find(img => img.orden === 1)?.imagen_url || imagenes[0].imagen_url : 
+                        producto.imagen_url;
+                    
+                    return `
+                        <div class="carousel-item ${index === 0 ? 'active' : ''}">
+                            <div class="carousel-producto">
+                                <div class="carousel-inner">
+                                    <img src="${imagenPrincipal}" 
+                                         class="d-block w-100 carousel-image" 
+                                         alt="${producto.nombre}"
+                                         onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
+                                </div>
+                                <div class="producto-info">
+                                    <h3>${producto.nombre}</h3>
+                                    <p class="categoria">${producto.categorias?.nombre || 'Sin categoría'}</p>
+                                    <p class="descripcion">${producto.descripcion?.substring(0, 150) || 'Descripción no disponible'}...</p>
+                                    <div class="producto-footer">
+                                        <div class="precio">$${producto.precio?.toFixed(2) || '0.00'}</div>
+                                        <a href="#" class="btn btn-primary" 
+                                           data-bs-toggle="modal" 
+                                           data-bs-target="#modalProducto${producto.id}">
+                                            Ver Detalles
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                const indicadores = productos.map((_, index) => `
+                    <button type="button" data-bs-target="#carruselDestacados" 
+                            data-bs-slide-to="${index}" 
+                            class="${index === 0 ? 'active' : ''}" 
+                            aria-label="Slide ${index + 1}"></button>
+                `).join('');
+                
+                document.getElementById('carrusel-productos').innerHTML = `
+                    <div id="carruselDestacados" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-indicators">
+                            ${indicadores}
+                        </div>
+                        <div class="carousel-inner">
+                            ${carruselHTML}
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carruselDestacados" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carruselDestacados" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                `;
+                
+            } catch (error) {
+                document.getElementById('carrusel-productos').innerHTML = `
+                    <div class="text-center">
+                        <p>Error cargando productos destacados</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Renderizar productos con modal mejorado
         function renderizarProductos() {
             const grid = document.getElementById('productos-grid');
             
-            // Filtrar productos por categoría
             let productosFiltrados = todosProductos;
             if (categoriaActual !== 'todos') {
                 productosFiltrados = todosProductos.filter(p => 
@@ -651,7 +775,6 @@
                 );
             }
             
-            // Solo productos con stock positivo o cero
             productosFiltrados = productosFiltrados.filter(p => p.stock >= 0);
             
             if (productosFiltrados.length === 0) {
@@ -667,7 +790,6 @@
             }
             
             grid.innerHTML = productosFiltrados.map(producto => {
-                // Determinar estado del stock
                 let stockClass = 'stock-disponible';
                 let stockText = `Stock: ${producto.stock}`;
                 let stockIcon = 'bi-check-circle';
@@ -682,8 +804,58 @@
                     stockIcon = 'bi-exclamation-triangle';
                 }
                 
-                // Obtener nombre de categoría
                 const categoriaNombre = producto.categorias?.nombre || 'Sin categoría';
+                const imagenes = producto.imagenes || [];
+                const imagenPrincipal = imagenes.length > 0 ? 
+                    imagenes.find(img => img.orden === 1)?.imagen_url || imagenes[0].imagen_url : 
+                    producto.imagen_url;
+                
+                // HTML para carrusel de imágenes en modal
+                let carruselImagenesHTML = '';
+                if (imagenes.length > 0) {
+                    const slides = imagenes.map((img, index) => `
+                        <div class="carousel-item ${index === 0 ? 'active' : ''}">
+                            <img src="${img.imagen_url}" 
+                                 class="d-block w-100" 
+                                 alt="${producto.nombre} - Imagen ${index + 1}"
+                                 onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
+                        </div>
+                    `).join('');
+                    
+                    const indicators = imagenes.map((_, index) => `
+                        <button type="button" 
+                                data-bs-target="#carouselProducto${producto.id}" 
+                                data-bs-slide-to="${index}" 
+                                class="${index === 0 ? 'active' : ''}" 
+                                aria-label="Slide ${index + 1}"></button>
+                    `).join('');
+                    
+                    carruselImagenesHTML = `
+                        <div id="carouselProducto${producto.id}" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-indicators">
+                                ${indicators}
+                            </div>
+                            <div class="carousel-inner">
+                                ${slides}
+                            </div>
+                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselProducto${producto.id}" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#carouselProducto${producto.id}" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    carruselImagenesHTML = `
+                        <img src="${imagenPrincipal}" 
+                             alt="${producto.nombre}" 
+                             class="modal-imagen"
+                             onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
+                    `;
+                }
                 
                 return `
                     <div class="producto-card" data-categoria="${producto.categorias?.id || ''}">
@@ -691,7 +863,7 @@
                             ${producto.categorias?.nombre ? 
                                 `<span class="categoria-tag">${categoriaNombre}</span>` : ''}
                             
-                            <img src="${producto.imagen_url || 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'}" 
+                            <img src="${imagenPrincipal}" 
                                  alt="${producto.nombre}" 
                                  class="producto-img"
                                  onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
@@ -708,14 +880,13 @@
                                 </span>
                             </div>
                             
-                            <!-- Botón que abre el modal -->
                             <a href="#" class="btn-ver-detalle" data-bs-toggle="modal" data-bs-target="#modalProducto${producto.id}">
                                 <i class="bi bi-eye"></i> Ver Detalles
                             </a>
                         </div>
                     </div>
                     
-                    <!-- Modal para este producto -->
+                    <!-- Modal con carrusel de imágenes -->
                     <div class="modal fade modal-producto" id="modalProducto${producto.id}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-lg">
                             <div class="modal-content">
@@ -724,12 +895,9 @@
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <img src="${producto.imagen_url || 'https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'}" 
-                                         alt="${producto.nombre}" 
-                                         class="modal-imagen"
-                                         onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
+                                    ${carruselImagenesHTML}
                                     
-                                    <p class="modal-descripcion">
+                                    <p class="modal-descripcion mt-3">
                                         ${producto.descripcion || 'No hay descripción disponible para este producto.'}
                                     </p>
                                     
@@ -748,13 +916,18 @@
                                             <span class="detalle-label">Código:</span>
                                             <span class="detalle-valor">${producto.id.substring(0, 8)}</span>
                                         </div>
+                                        ${imagenes.length > 1 ? `
+                                        <div class="detalle-item">
+                                            <span class="detalle-label">Imágenes:</span>
+                                            <span class="detalle-valor">${imagenes.length} disponibles</span>
+                                        </div>
+                                        ` : ''}
                                     </div>
                                     
                                     <div class="modal-precio">
                                         $${producto.precio?.toFixed(2) || '0.00'}
                                     </div>
                                     
-                                    <!-- Botón de WhatsApp -->
                                     <a href="https://wa.me/${telefonoWhatsApp}?text=Hola,%20estoy%20interesado%20en%20el%20producto:%20${encodeURIComponent(producto.nombre)}%20(Código:%20${producto.id.substring(0,8)})" 
                                        target="_blank" 
                                        class="btn-whatsapp">
@@ -774,30 +947,17 @@
             
             botonesFiltro.forEach(boton => {
                 boton.addEventListener('click', () => {
-                    // Remover clase active de todos
                     botonesFiltro.forEach(b => b.classList.remove('active'));
-                    
-                    // Agregar clase active al botón clickeado
                     boton.classList.add('active');
-                    
-                    // Actualizar categoría actual
                     categoriaActual = boton.dataset.categoria;
-                    
-                    // Re-renderizar productos
                     renderizarProductos();
                     
-                    // Scroll suave hacia los productos
                     document.querySelector('.productos-grid').scrollIntoView({
                         behavior: 'smooth',
                         block: 'start'
                     });
                 });
             });
-        }
-        
-        // Configurar número de WhatsApp (puedes hacerlo dinámico)
-        function configurarWhatsApp(numero) {
-            telefonoWhatsApp = numero;
         }
         
         // Iniciar cuando el DOM esté listo
