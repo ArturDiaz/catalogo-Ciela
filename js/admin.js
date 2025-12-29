@@ -301,7 +301,10 @@ window.mostrarPreviewsImagenes = function() {
     const fragment = document.createDocumentFragment();
     
     Array.from(input.files).forEach((file, index) => {
-        if (!file.type.startsWith('image/')) return;
+        if (!file.type.startsWith('image/')) {
+            console.log('Archivo no es imagen:', file.name);
+            return;
+        }
         
         if (file.size > 5 * 1024 * 1024) {
             alert(`La imagen "${file.name}" es demasiado grande (máximo 5MB)`);
@@ -435,9 +438,18 @@ window.agregarProducto = async function() {
         return;
     }
     
+    // Verificación más detallada de imágenes
     if (imagenesSeleccionadas.length === 0) {
-        alert('Debes subir al menos una imagen');
-        return;
+        const inputFiles = document.getElementById('imagenes').files;
+        
+        if (inputFiles.length > 0) {
+            // Hay archivos pero no se procesaron
+            alert('Hubo un error procesando las imágenes. Intenta seleccionarlas nuevamente.');
+            return;
+        } else {
+            alert('Debes subir al menos una imagen');
+            return;
+        }
     }
     
     const btn = document.querySelector('.add-product .btn-primary');
