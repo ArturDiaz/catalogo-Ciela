@@ -29,115 +29,117 @@
     </div>
 
     <main id="admin-panel">
-        <header class="admin-header flex-c gap-20">
-            <section class="header-section flex-r ai-c jc-b">
-                <img src="img/logo-ciela.png" alt="">
-                <button onclick="logout()" class="logout-btn">🚪 Cerrar Sesión</button>
-            </section>
-            <h1>Panel de Control</h1>
-        </header>
-
-        <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home"
-                    type="button" role="tab" aria-controls="pills-home" aria-selected="true">➕ Agregar Producto</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile"
-                    type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Productos</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pills-contact-tab" data-bs-toggle="pill" data-bs-target="#pills-contact"
-                    type="button" role="tab" aria-controls="pills-contact" aria-selected="false">Categorias</button>
-            </li>
-        </ul>
-        <div class="tab-content" id="pills-tabContent">
-            <!-- SECCIÓN AGREGAR PRODUCTO -->
-            <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
-                <section class="add-product">
-                    <h2>➕ Agregar Nuevo Producto</h2>
-                    
-                    <input type="text" id="nombre" placeholder="Nombre del producto *" required>
-                    <textarea id="descripcion" placeholder="Descripción detallada"></textarea>
-                    
-                    <div class="form-row">
-                        <input type="number" id="precio" placeholder="Precio *" step="0.01" min="0.01" required>
-                        <div class="stock-input">
-                            <button type="button" class="stock-btn minus" onclick="ajustarStock('stock', -1)">-</button>
-                            <input type="number" id="stock" value="0" min="0" placeholder="Stock *" required>
-                            <button type="button" class="stock-btn plus" onclick="ajustarStock('stock', 1)">+</button>
-                        </div>
-                    </div>
-                    
-                    <select id="categoria">
-                        <option value="">Selecciona una categoría</option>
-                    </select>
-                    
-                    <!-- INPUT PARA MÚLTIPLES IMÁGENES -->
-                    <div class="image-upload">
-                        <label for="imagenes" class="upload-label">
-                            <div class="upload-icon">📸</div>
-                            <div class="upload-text">
-                                <strong>Seleccionar múltiples imágenes</strong>
-                                <small>JPG, PNG, WebP, GIF - Máx. 5MB cada una</small>
-                                <small>Primera imagen será la principal</small>
-                            </div>
-                        </label>
-                        <input type="file" id="imagenes" accept="image/*" multiple>
-                        
-                        <!-- VISTA PREVIA DE MÚLTIPLES IMÁGENES -->
-                        <div id="preview-imagenes" class="preview-container">
-                            <div class="preview-placeholder">
-                                <div class="placeholder-icon">🖼️</div>
-                                <p>Arrastra o selecciona múltiples imágenes</p>
-                                <small>Primera imagen será la principal</small>
-                            </div>
-                        </div>
-                        
-                        <div id="loading-imagen" class="upload-loading"></div>
-                    </div>
-                    
-                    <button onclick="agregarProducto()" class="btn-primary">Agregar Producto</button>
+        <div class="flex-c gap-30">
+            <header class="admin-header flex-c gap-20">
+                <section class="header-section flex-r ai-c jc-b">
+                    <img src="img/logo-ciela.png" alt="">
+                    <button onclick="logout()" class="logout-btn">🚪 Cerrar Sesión</button>
                 </section>
-            </div>
-            <!-- SECCIÓN PRODUCTOS EXISTENTES -->
-            <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
-                <section class="product-list">
-                    <div class="list-header">
-                        <h2>📦 Productos Existentes</h2>
+                <h1>Panel de Control</h1>
+            </header>
+    
+            <ul class="nav nav-pills mb-3 p-3" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home"
+                        type="button" role="tab" aria-controls="pills-home" aria-selected="true">➕ Agregar Producto</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile"
+                        type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Productos</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pills-contact-tab" data-bs-toggle="pill" data-bs-target="#pills-contact"
+                        type="button" role="tab" aria-controls="pills-contact" aria-selected="false">Categorias</button>
+                </li>
+            </ul>
+            <div class="tab-content" id="pills-tabContent">
+                <!-- SECCIÓN AGREGAR PRODUCTO -->
+                <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
+                    <section class="add-product">
+                        <h2>➕ Agregar Nuevo Producto</h2>
                         
-                        <div class="bulk-actions">
-                            <label class="select-all">
-                                <input type="checkbox" id="select-all" onchange="seleccionarTodos()">
-                                Seleccionar todos
+                        <input type="text" id="nombre" placeholder="Nombre del producto *" required>
+                        <textarea id="descripcion" placeholder="Descripción detallada"></textarea>
+                        
+                        <div class="form-row">
+                            <input type="number" id="precio" placeholder="Precio *" step="0.01" min="0.01" required>
+                            <div class="stock-input">
+                                <button type="button" class="stock-btn minus" onclick="ajustarStock('stock', -1)">-</button>
+                                <input type="number" id="stock" value="0" min="0" placeholder="Stock *" required>
+                                <button type="button" class="stock-btn plus" onclick="ajustarStock('stock', 1)">+</button>
+                            </div>
+                        </div>
+                        
+                        <select id="categoria">
+                            <option value="">Selecciona una categoría</option>
+                        </select>
+                        
+                        <!-- INPUT PARA MÚLTIPLES IMÁGENES -->
+                        <div class="image-upload">
+                            <label for="imagenes" class="upload-label">
+                                <div class="upload-icon">📸</div>
+                                <div class="upload-text">
+                                    <strong>Seleccionar múltiples imágenes</strong>
+                                    <small>JPG, PNG, WebP, GIF - Máx. 5MB cada una</small>
+                                    <small>Primera imagen será la principal</small>
+                                </div>
                             </label>
+                            <input type="file" id="imagenes" accept="image/*" multiple>
                             
-                            <button onclick="desactivarSeleccionados()" class="btn-bulk">
-                                ⏸️ Desactivar seleccionados
-                            </button>
-                            <button onclick="eliminarSeleccionados()" class="btn-bulk delete">
-                                🗑️ Eliminar seleccionados
-                            </button>
+                            <!-- VISTA PREVIA DE MÚLTIPLES IMÁGENES -->
+                            <div id="preview-imagenes" class="preview-container">
+                                <div class="preview-placeholder">
+                                    <div class="placeholder-icon">🖼️</div>
+                                    <p>Arrastra o selecciona múltiples imágenes</p>
+                                    <small>Primera imagen será la principal</small>
+                                </div>
+                            </div>
+                            
+                            <div id="loading-imagen" class="upload-loading"></div>
                         </div>
-                    </div>
-                    
-                    <div id="lista-productos" class="products-grid">
-                        <p>Cargando productos...</p>
-                    </div>
-                </section>
-            </div>
-            <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
-                <!-- SECCIÓN GESTIÓN DE CATEGORÍAS -->
-                <div class="admin-section">
-                    <h2>📁 Gestión de Categorías</h2>
-                    <div class="form-container">
-                        <input type="text" id="categoria-nombre" placeholder="Nombre de categoría *" required>
-                        <textarea id="categoria-descripcion" placeholder="Descripción (opcional)"></textarea>
-                        <button class="btn-primary" onclick="agregarCategoria()">➕ Agregar Categoría</button>
-                    </div>
-                    
-                    <div class="categories-list" id="lista-categorias">
-                        <!-- Las categorías se cargarán aquí -->
+                        
+                        <button onclick="agregarProducto()" class="btn-primary">Agregar Producto</button>
+                    </section>
+                </div>
+                <!-- SECCIÓN PRODUCTOS EXISTENTES -->
+                <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
+                    <section class="product-list">
+                        <div class="list-header">
+                            <h2>📦 Productos Existentes</h2>
+                            
+                            <div class="bulk-actions">
+                                <label class="select-all">
+                                    <input type="checkbox" id="select-all" onchange="seleccionarTodos()">
+                                    Seleccionar todos
+                                </label>
+                                
+                                <button onclick="desactivarSeleccionados()" class="btn-bulk">
+                                    ⏸️ Desactivar seleccionados
+                                </button>
+                                <button onclick="eliminarSeleccionados()" class="btn-bulk delete">
+                                    🗑️ Eliminar seleccionados
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="lista-productos" class="products-grid">
+                            <p>Cargando productos...</p>
+                        </div>
+                    </section>
+                </div>
+                <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
+                    <!-- SECCIÓN GESTIÓN DE CATEGORÍAS -->
+                    <div class="admin-section">
+                        <h2>📁 Gestión de Categorías</h2>
+                        <div class="form-container">
+                            <input type="text" id="categoria-nombre" placeholder="Nombre de categoría *" required>
+                            <textarea id="categoria-descripcion" placeholder="Descripción (opcional)"></textarea>
+                            <button class="btn-primary" onclick="agregarCategoria()">➕ Agregar Categoría</button>
+                        </div>
+                        
+                        <div class="categories-list" id="lista-categorias">
+                            <!-- Las categorías se cargarán aquí -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -145,6 +147,8 @@
     </main>
     
     
+    <!-- Scripts Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SCRIPTS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
