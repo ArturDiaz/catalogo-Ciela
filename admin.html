@@ -113,6 +113,129 @@
             border-radius: 12px;
             font-size: 11px;
         }
+        
+        /* Estilos para el modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .btn-save {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .imagenes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .imagen-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .imagen-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+        
+        .agregar-imagenes-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+        }
+        
+        .preview-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .btn-images {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-images:hover {
+            background: #bbdefb;
+        }
     </style>
 </head>
 <body>
@@ -167,7 +290,8 @@
                             <small>Primera imagen será la principal</small>
                         </div>
                     </label>
-                    <input type="file" id="imagenes" accept="image/*" multiple>
+                    <!-- AÑADE EL EVENTO ONCHANGE AQUÍ -->
+                    <input type="file" id="imagenes" accept="image/*" multiple onchange="mostrarPreviewsImagenes()">
                     
                     <!-- Vista previa de múltiples imágenes -->
                     <div id="preview-imagenes" class="preview-container">
@@ -238,6 +362,72 @@
             valor += cambio;
             if (valor < 0) valor = 0;
             input.value = valor;
+        };
+        
+        // Asegurar que la función de vista previa esté disponible
+        window.mostrarPreviewsImagenes = function() {
+            const input = document.getElementById('imagenes');
+            const previewContainer = document.getElementById('preview-imagenes');
+            
+            if (!input || !previewContainer) return;
+            
+            previewContainer.innerHTML = '';
+            
+            if (input.files.length === 0) {
+                previewContainer.innerHTML = `
+                    <div class="preview-placeholder">
+                        <div class="placeholder-icon">🖼️</div>
+                        <p>Arrastra o selecciona múltiples imágenes</p>
+                        <small>Primera imagen será la principal</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            const fragment = document.createDocumentFragment();
+            
+            Array.from(input.files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`La imagen "${file.name}" es demasiado grande (máximo 5MB)`);
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const div = document.createElement('div');
+                    div.className = 'imagen-preview-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${index + 1}">
+                        <div class="imagen-info">
+                            <span>${file.name.length > 15 ? file.name.substring(0, 12) + '...' : file.name}</span>
+                            <div class="orden-control">
+                                <label>Orden:</label>
+                                <input type="number" class="orden-input" value="${index + 1}" min="1" 
+                                       data-index="${index}" onchange="actualizarOrdenImagen(${index}, this.value)">
+                            </div>
+                            <button type="button" class="btn-remove-imagen" onclick="removerImagen(${index})">
+                                ✕
+                            </button>
+                        </div>
+                    `;
+                    fragment.appendChild(div);
+                };
+                
+                reader.readAsDataURL(file);
+            });
+            
+            previewContainer.appendChild(fragment);
+        };
+        
+        // Funciones auxiliares para gestión de imágenes
+        window.actualizarOrdenImagen = function(index, nuevoOrden) {
+            console.log(`Actualizar orden imagen ${index} a ${nuevoOrden}`);
+        };
+        
+        window.removerImagen = function(index) {
+            console.log(`Remover imagen ${index}`);
         };
     </script>
 </body>
