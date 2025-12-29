@@ -657,7 +657,7 @@ async function cargarProductosAdmin() {
             if (imagenes.length > 0) {
                 const mostrarPrimeras = Math.min(imagenes.length, 3);
                 imagenesHTML = `
-                    <div class="content-img flex-c gap-10">
+                    <div class="content-img flex-c-r gap-10">
                         <div class="producto-imagenes-carousel">
                             ${imagenes.slice(0, mostrarPrimeras).map(img => 
                                 `<img src="${img.imagen_url}" 
@@ -675,7 +675,7 @@ async function cargarProductosAdmin() {
             
             return `
                 <div class="producto-admin" data-id="${p.id}">
-                    <div class="producto-header flex-c__grid cl-4 gap-20">
+                    <div class="producto-header flex-c__grid cl-auto-3 gap-20">
                         <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
                         ${imagenesHTML}
                         <div class="producto-info span-2">
@@ -689,27 +689,28 @@ async function cargarProductosAdmin() {
                                     ${p.activo ? 'Activo' : 'Inactivo'}
                                 </span>
                             </div>
+
+                            <div class="producto-actions">
+                                <div class="stock-control">
+                                    <button class="btn-minus btn btn-scale-20" onclick="actualizarStock('${p.id}', -1)">-1</button>
+                                    <button class="btn-minus btn btn-scale-20" onclick="actualizarStock('${p.id}', -5)">-5</button>
+                                    <button class="btn-plus btn btn-scale-30" onclick="actualizarStock('${p.id}', 1)">+1</button>
+                                    <button class="btn-plus btn btn-scale-30" onclick="actualizarStock('${p.id}', 5)">+5</button>
+                                    <button class="btn-plus btn btn-scale-30" onclick="actualizarStock('${p.id}', 10)">+10</button>
+                                </div>
+                                
+                                <div class="action-buttons">
+                                    <button class="btn-edit btn btn-green-pastel" onclick="editarProducto('${p.id}')">
+                                        Editar
+                                    </button>
+                                    <button class="btn-toggle btn btn-scale-30" onclick="toggleActivo('${p.id}', ${!p.activo})">
+                                        ${p.activo ? 'Desactivar' : 'Activar'}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="producto-actions">
-                        <div class="stock-control">
-                            <button class="btn-minus" onclick="actualizarStock('${p.id}', -1)">-1</button>
-                            <button class="btn-minus" onclick="actualizarStock('${p.id}', -5)">-5</button>
-                            <button class="btn-plus" onclick="actualizarStock('${p.id}', 1)">+1</button>
-                            <button class="btn-plus" onclick="actualizarStock('${p.id}', 5)">+5</button>
-                            <button class="btn-plus" onclick="actualizarStock('${p.id}', 10)">+10</button>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button class="btn-edit" onclick="editarProducto('${p.id}')">
-                                ✏️ Editar
-                            </button>
-                            <button class="btn-toggle" onclick="toggleActivo('${p.id}', ${!p.activo})">
-                                ${p.activo ? 'Desactivar' : 'Activar'}
-                            </button>
-                        </div>
-                    </div>
                 </div>
             `;
         }).join('');

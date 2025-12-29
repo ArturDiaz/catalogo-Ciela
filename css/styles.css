@@ -30,6 +30,13 @@
 	--c-blue: #0077ff;
 	--c-blue-hover: #003f9b;
 
+    --c-green-10: #d3f8e4;
+	--c-green-20: #abefce;
+	--c-green-30: #75e0b3;
+	--c-green-40: #3dca93;
+	--c-green: #1bbc82;
+	--c-green-hover: #0d8e62;
+
     --c-scale-10: #f3f5fa;
 	--c-scale-20: #e9ecf6;
 	--c-scale-30: #d7daee;
@@ -693,7 +700,7 @@ body {
     background: var(--c-scale-50);
     cursor: not-allowed;
 }
-.ct-btn-red{
+.btn-red{
 	background: var(--c-red);
     color: var(--c-blanco);
     &:hover,
@@ -703,7 +710,7 @@ body {
         color: var(--c-blanco);
     }
 }
-.ct-btn-blue{
+.btn-blue{
 	background: var(--c-blue);
     color: var(--c-blanco);
     &:hover,
@@ -1060,16 +1067,18 @@ body {
 .producto-checkbox {
     margin-top: 10px;
     cursor: pointer;
+    width: 20px;
 }
 
 .producto-imagenes-carousel {
     display: flex;
+    flex-wrap: wrap;
     gap: 5px;
     margin-right: 15px;
     align-items: center;
+    max-width: 150px;
 
     img:nth-child(1) {
-        border: 2px solid;
         width: 150px;
         height: 170px;
     }
@@ -1099,11 +1108,13 @@ body {
 .imagenes-count {
     background: #e3f2fd;
     color: #1976d2;
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
     margin-top: 5px;
+    width: fit-content;
+    height: fit-content;
 }
 
 .producto-info {
@@ -1224,20 +1235,6 @@ body {
     cursor: pointer;
     font-size: 0.9em;
     transition: opacity 0.2s;
-}
-
-.btn-edit:hover, .btn-toggle:hover {
-    opacity: 0.9;
-}
-
-.btn-edit {
-    background: #f39c12;
-    color: white;
-}
-
-.btn-toggle {
-    background: #9b59b6;
-    color: white;
 }
 
 /* ===== GESTIÓN DE CATEGORÍAS ===== */
