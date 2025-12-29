@@ -1,4 +1,4 @@
-// js/admin.js - VERSIÓN FINAL CON MÚLTIPLES IMÁGENES
+// js/admin.js - VERSIÓN CORREGIDA CON INPUT MÚLTIPLE FUNCIONAL
 
 // ====================
 // CONFIGURACIÓN CLOUDINARY
@@ -34,10 +34,32 @@ async function waitForSupabase() {
 }
 
 // ====================
-// MANEJO DE MÚLTIPLES IMÁGENES
+// MANEJO DE MÚLTIPLES IMÁGENES - CORREGIDO
 // ====================
 let imagenesTemporales = [];
+let inputImagenes = null;
 
+// Inicializar el input de imágenes
+function inicializarInputImagenes() {
+    inputImagenes = document.getElementById('imagenes');
+    
+    // Configurar el input para que no abra múltiples veces
+    if (inputImagenes) {
+        inputImagenes.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Restablecer el input después de seleccionar
+        inputImagenes.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                previewImagenesMultiples(this);
+            }
+            // No restablecemos el valor para permitir agregar más imágenes
+        });
+    }
+}
+
+// CORRECCIÓN: Esta función ahora agrega imágenes en lugar de reemplazarlas
 window.previewImagenesMultiples = function(input) {
     const previewContainer = document.getElementById('preview-imagenes');
     
@@ -45,35 +67,52 @@ window.previewImagenesMultiples = function(input) {
         return;
     }
     
-    previewContainer.innerHTML = '';
-    imagenesTemporales = [];
+    // Eliminar el placeholder si existe
+    const placeholder = previewContainer.querySelector('.preview-placeholder');
+    if (placeholder) {
+        placeholder.remove();
+    }
     
     Array.from(input.files).forEach((file, index) => {
+        // Verificar si la imagen ya fue agregada
+        const nombreExistente = imagenesTemporales.find(img => 
+            img.file.name === file.name && img.file.size === file.size
+        );
+        
+        if (nombreExistente) {
+            alert(`La imagen "${file.name}" ya fue agregada`);
+            return;
+        }
+        
         const reader = new FileReader();
         
         reader.onload = function(e) {
-            imagenesTemporales.push({
+            const nuevaImagen = {
                 file: file,
                 previewUrl: e.target.result,
-                orden: index + 1
-            });
+                orden: imagenesTemporales.length + 1,
+                id: Date.now() + Math.random() // ID único
+            };
             
+            imagenesTemporales.push(nuevaImagen);
+            
+            // Crear elemento de vista previa
             const previewItem = document.createElement('div');
             previewItem.className = 'imagen-preview-item';
+            previewItem.id = `imagen-preview-${nuevaImagen.id}`;
             previewItem.innerHTML = `
-                <img src="${e.target.result}" alt="Previsualización ${index + 1}">
+                <img src="${e.target.result}" alt="Previsualización ${nuevaImagen.orden}">
                 <div class="imagen-info">
-                    <div style="font-size: 11px; margin-bottom: 2px;">${file.name}</div>
+                    <div class="nombre-imagen" title="${file.name}">${file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name}</div>
                     <div class="orden-control">
                         <span>Orden:</span>
                         <input type="number" class="orden-input" 
-                               data-index="${index}" 
-                               value="${index + 1}" 
-                               min="1" max="${input.files.length}"
-                               onchange="actualizarOrdenImagen(${index}, this.value)">
+                               value="${nuevaImagen.orden}" 
+                               min="1" max="${imagenesTemporales.length}"
+                               onchange="actualizarOrdenImagen(${nuevaImagen.id}, this.value)">
                     </div>
                     <button type="button" class="btn-remove-imagen" 
-                            onclick="eliminarImagenTemporal(${index})">
+                            onclick="eliminarImagenTemporal(${nuevaImagen.id})">
                         ✕ Eliminar
                     </button>
                 </div>
@@ -84,66 +123,162 @@ window.previewImagenesMultiples = function(input) {
         
         reader.readAsDataURL(file);
     });
+    
+    // Actualizar orden de todas las imágenes
+    reordenarVistaPrevia();
+    
+    // Actualizar el DataTransfer del input para mantener los archivos
+    actualizarInputFiles();
 };
 
-window.actualizarOrdenImagen = function(index, nuevoOrden) {
-    const imagen = imagenesTemporales[index];
-    if (imagen) {
-        imagen.orden = parseInt(nuevoOrden);
-        reordenarVistaPrevia();
-    }
+// Actualizar orden de una imagen específica
+window.actualizarOrdenImagen = function(imagenId, nuevoOrden) {
+    const imagenIndex = imagenesTemporales.findIndex(img => img.id === imagenId);
+    if (imagenIndex === -1) return;
+    
+    nuevoOrden = parseInt(nuevoOrden);
+    if (nuevoOrden < 1) nuevoOrden = 1;
+    if (nuevoOrden > imagenesTemporales.length) nuevoOrden = imagenesTemporales.length;
+    
+    imagenesTemporales[imagenIndex].orden = nuevoOrden;
+    reordenarVistaPrevia();
+    actualizarInputFiles();
 };
 
+// Reordenar vista previa basado en el orden
 function reordenarVistaPrevia() {
     const previewContainer = document.getElementById('preview-imagenes');
     if (!previewContainer) return;
     
+    // Ordenar imágenes por orden
     imagenesTemporales.sort((a, b) => a.orden - b.orden);
     
-    previewContainer.innerHTML = '';
+    // Reasignar órdenes consecutivos
     imagenesTemporales.forEach((imagen, index) => {
-        const previewItem = document.createElement('div');
-        previewItem.className = 'imagen-preview-item';
-        previewItem.innerHTML = `
-            <img src="${imagen.previewUrl}" alt="Previsualización ${imagen.orden}">
-            <div class="imagen-info">
-                <div style="font-size: 11px; margin-bottom: 2px;">${imagen.file.name}</div>
-                <div class="orden-control">
-                    <span>Orden:</span>
-                    <input type="number" class="orden-input" 
-                           data-index="${index}" 
-                           value="${imagen.orden}" 
-                           min="1" max="${imagenesTemporales.length}"
-                           onchange="actualizarOrdenImagen(${index}, this.value)">
-                </div>
-                <button type="button" class="btn-remove-imagen" 
-                        onclick="eliminarImagenTemporal(${index})">
-                    ✕ Eliminar
-                </button>
-            </div>
-        `;
-        previewContainer.appendChild(previewItem);
+        imagen.orden = index + 1;
+    });
+    
+    // Actualizar números en los inputs
+    document.querySelectorAll('.orden-input').forEach((input, index) => {
+        input.value = index + 1;
+        input.max = imagenesTemporales.length;
     });
 };
 
-window.eliminarImagenTemporal = function(index) {
-    imagenesTemporales.splice(index, 1);
+// Eliminar imagen temporal
+window.eliminarImagenTemporal = function(imagenId) {
+    const imagenIndex = imagenesTemporales.findIndex(img => img.id === imagenId);
+    if (imagenIndex === -1) return;
     
-    imagenesTemporales.forEach((img, i) => {
-        img.orden = i + 1;
+    imagenesTemporales.splice(imagenIndex, 1);
+    
+    // Remover elemento del DOM
+    const elemento = document.getElementById(`imagen-preview-${imagenId}`);
+    if (elemento) elemento.remove();
+    
+    // Reordenar las imágenes restantes
+    imagenesTemporales.forEach((img, index) => {
+        img.orden = index + 1;
     });
     
-    const input = document.getElementById('imagenes');
-    if (input) {
-        const dt = new DataTransfer();
-        imagenesTemporales.forEach(img => {
-            dt.items.add(img.file);
-        });
-        input.files = dt.files;
+    reordenarVistaPrevia();
+    actualizarInputFiles();
+    
+    // Mostrar placeholder si no hay imágenes
+    if (imagenesTemporales.length === 0) {
+        const previewContainer = document.getElementById('preview-imagenes');
+        previewContainer.innerHTML = `
+            <div class="preview-placeholder">
+                <div class="placeholder-icon">🖼️</div>
+                <p>Arrastra o selecciona múltiples imágenes</p>
+                <small>Primera imagen será la principal</small>
+            </div>
+        `;
+    }
+};
+
+// Actualizar el input files con las imágenes actuales
+function actualizarInputFiles() {
+    if (!inputImagenes) return;
+    
+    const dt = new DataTransfer();
+    imagenesTemporales.forEach(img => {
+        dt.items.add(img.file);
+    });
+    
+    inputImagenes.files = dt.files;
+}
+
+// Permitir arrastrar y soltar imágenes
+function configurarDragAndDrop() {
+    const uploadLabel = document.querySelector('.upload-label');
+    const previewContainer = document.getElementById('preview-imagenes');
+    
+    if (!uploadLabel || !previewContainer) return;
+    
+    // Prevenir comportamientos por defecto
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadLabel.addEventListener(eventName, preventDefaults, false);
+        previewContainer.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
     }
     
-    reordenarVistaPrevia();
-};
+    // Efectos visuales al arrastrar
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadLabel.addEventListener(eventName, highlight, false);
+        previewContainer.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadLabel.addEventListener(eventName, unhighlight, false);
+        previewContainer.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        uploadLabel.style.background = 'linear-gradient(135deg, #5a11cb 0%, #1a65fc 100%)';
+    }
+    
+    function unhighlight() {
+        uploadLabel.style.background = 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)';
+    }
+    
+    // Manejar drop
+    previewContainer.addEventListener('drop', handleDrop, false);
+    uploadLabel.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        // Simular input change
+        const input = document.getElementById('imagenes');
+        if (input && files.length > 0) {
+            // Crear un nuevo FileList (no es posible directamente)
+            const dataTransfer = new DataTransfer();
+            
+            // Agregar archivos existentes
+            if (input.files) {
+                for (let i = 0; i < input.files.length; i++) {
+                    dataTransfer.items.add(input.files[i]);
+                }
+            }
+            
+            // Agregar nuevos archivos
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].type.startsWith('image/')) {
+                    dataTransfer.items.add(files[i]);
+                }
+            }
+            
+            input.files = dataTransfer.files;
+            previewImagenesMultiples(input);
+        }
+    }
+}
 
 // ====================
 // AUTENTICACIÓN
@@ -406,6 +541,7 @@ window.agregarProducto = async function() {
     }
     
     try {
+        // 1. Insertar el producto
         const { data: productoInsertado, error: productoError } = await window.supabaseClient
             .from('productos')
             .insert([producto])
@@ -414,6 +550,7 @@ window.agregarProducto = async function() {
         
         if (productoError) throw productoError;
         
+        // 2. Subir y asociar múltiples imágenes si existen
         if (imagenesTemporales.length > 0) {
             const imagenesPromises = imagenesTemporales.map(async (imagenTemp, index) => {
                 try {
@@ -434,12 +571,14 @@ window.agregarProducto = async function() {
                     return { url: imagenData.url, orden: imagenTemp.orden };
                     
                 } catch (error) {
+                    alert(`Error subiendo imagen ${imagenTemp.file.name}: ${error.message}`);
                     return null;
                 }
             });
             
             await Promise.all(imagenesPromises);
         } else {
+            // Si no hay imágenes, usar una por defecto
             await window.supabaseClient
                 .from('productos')
                 .update({ 
@@ -468,7 +607,11 @@ function limpiarFormularioProductoCompleto() {
     document.getElementById('precio').value = '';
     document.getElementById('stock').value = '0';
     document.getElementById('categoria').value = '';
-    document.getElementById('imagenes').value = '';
+    
+    // Limpiar input de imágenes
+    if (inputImagenes) {
+        inputImagenes.value = '';
+    }
     
     const previewContainer = document.getElementById('preview-imagenes');
     if (previewContainer) {
@@ -509,9 +652,6 @@ async function cargarProductosAdmin() {
         
         lista.innerHTML = productos.map(p => {
             const imagenes = p.imagenes || [];
-            const imagenPrincipal = imagenes.length > 0 ? 
-                imagenes.find(img => img.orden === 1)?.imagen_url || imagenes[0].imagen_url : 
-                p.imagen_url;
             
             let imagenesHTML = '';
             if (imagenes.length > 0) {
@@ -835,89 +975,15 @@ async function verificarSesion() {
 }
 
 // ====================
-// INICIALIZACIÓN
+// INICIALIZACIÓN COMPLETA
 // ====================
 async function initAdmin() {
     await waitForSupabase();
     await verificarSesion();
+    
+    // Inicializar componentes
+    inicializarInputImagenes();
+    configurarDragAndDrop();
 }
 
 document.addEventListener('DOMContentLoaded', initAdmin);
-
-// Estilos adicionales
-const style = document.createElement('style');
-style.textContent = `
-    #loading-imagen {
-        text-align: center;
-        padding: 10px;
-        background: #f0f9ff;
-        border-radius: 5px;
-        margin: 10px 0;
-    }
-    
-    #loading-imagen div {
-        animation: pulse 1.5s infinite;
-    }
-    
-    .categoria-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 15px;
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 5px;
-        margin-bottom: 8px;
-    }
-    
-    .categoria-nombre {
-        font-weight: 500;
-        color: #333;
-    }
-    
-    .categoria-actions {
-        display: flex;
-        gap: 5px;
-    }
-    
-    .btn-edit-small, .btn-delete-small {
-        padding: 4px 8px;
-        font-size: 12px;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-    }
-    
-    .btn-edit-small {
-        background: #e3f2fd;
-        color: #1976d2;
-    }
-    
-    .btn-delete-small {
-        background: #ffebee;
-        color: #d32f2f;
-    }
-    
-    .categoria-badge {
-        background: #e3f2fd;
-        color: #1976d2;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-    }
-    
-    .no-categories {
-        text-align: center;
-        color: #666;
-        padding: 20px;
-        background: #f9f9f9;
-        border-radius: 5px;
-    }
-    
-    @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-`;
-document.head.appendChild(style);

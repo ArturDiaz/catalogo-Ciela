@@ -5,114 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ciela - Panel de Administración</title>
     <link rel="stylesheet" href="css/styles.css">
-    <style>
-        .preview-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-            min-height: 150px;
-        }
-        
-        .imagen-preview-item {
-            width: 120px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .imagen-preview-item img {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            display: block;
-        }
-        
-        .imagen-info {
-            padding: 8px;
-            background: #f8f9fa;
-            border-top: 1px solid #ddd;
-            font-size: 12px;
-        }
-        
-        .orden-control {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin: 4px 0;
-            font-size: 11px;
-        }
-        
-        .orden-control input {
-            width: 40px;
-            padding: 2px 4px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            font-size: 11px;
-        }
-        
-        .btn-remove-imagen {
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            padding: 2px 6px;
-            cursor: pointer;
-            font-size: 10px;
-            width: 100%;
-            margin-top: 4px;
-        }
-        
-        .preview-placeholder {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            width: 100%;
-            border: 2px dashed #ddd;
-            border-radius: 8px;
-        }
-        
-        .placeholder-icon {
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-        
-        .producto-imagenes-carousel {
-            display: flex;
-            gap: 5px;
-            margin-right: 15px;
-        }
-        
-        .producto-img-mini {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 2px solid #ddd;
-        }
-        
-        .mas-imagenes {
-            width: 50px;
-            height: 50px;
-            background: #6c757d;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-        
-        .imagenes-count {
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-        }
-    </style>
 </head>
 <body>
     <!-- FORMULARIO LOGIN -->
@@ -152,13 +44,13 @@
                     </div>
                 </div>
                 
-                <select id="categoria" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px;">
+                <select id="categoria">
                     <option value="">Selecciona una categoría</option>
                 </select>
                 
                 <!-- INPUT PARA MÚLTIPLES IMÁGENES -->
                 <div class="image-upload">
-                    <label for="imagenes" class="upload-label" onclick="document.getElementById('imagenes').click()">
+                    <label for="imagenes" class="upload-label">
                         <div class="upload-icon">📸</div>
                         <div class="upload-text">
                             <strong>Seleccionar múltiples imágenes</strong>
@@ -166,9 +58,7 @@
                             <small>Primera imagen será la principal</small>
                         </div>
                     </label>
-                    <input type="file" id="imagenes" accept="image/*" multiple 
-                           style="display: none"
-                           onchange="previewImagenesMultiples(this)">
+                    <input type="file" id="imagenes" accept="image/*" multiple>
                     
                     <!-- VISTA PREVIA DE MÚLTIPLES IMÁGENES -->
                     <div id="preview-imagenes" class="preview-container">
@@ -179,7 +69,7 @@
                         </div>
                     </div>
                     
-                    <div id="loading-imagen" class="upload-loading" style="display:none;"></div>
+                    <div id="loading-imagen" class="upload-loading"></div>
                 </div>
                 
                 <button onclick="agregarProducto()" class="btn-primary">Agregar Producto</button>
