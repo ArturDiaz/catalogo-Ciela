@@ -657,30 +657,32 @@ async function cargarProductosAdmin() {
             if (imagenes.length > 0) {
                 const mostrarPrimeras = Math.min(imagenes.length, 3);
                 imagenesHTML = `
-                    <div class="producto-imagenes-carousel">
-                        ${imagenes.slice(0, mostrarPrimeras).map(img => 
-                            `<img src="${img.imagen_url}" 
-                                  class="producto-img-mini" 
-                                  alt="Imagen ${img.orden}"
-                                  onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">`
-                        ).join('')}
-                        ${imagenes.length > 3 ? 
-                            `<div class="mas-imagenes">+${imagenes.length - 3}</div>` : ''}
+                    <div class="content-img flex-c gap-10">
+                        <div class="producto-imagenes-carousel">
+                            ${imagenes.slice(0, mostrarPrimeras).map(img => 
+                                `<img src="${img.imagen_url}" 
+                                    class="producto-img-mini" 
+                                    alt="Imagen ${img.orden}"
+                                    onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">`
+                            ).join('')}
+                            ${imagenes.length > 3 ? 
+                                `<div class="mas-imagenes">+${imagenes.length - 3}</div>` : ''}
+                        </div>
+                        <div class="imagenes-count">${imagenes.length} imagen(es)</div>
                     </div>
-                    <div class="imagenes-count">${imagenes.length} imagen(es)</div>
                 `;
             }
             
             return `
                 <div class="producto-admin" data-id="${p.id}">
-                    <div class="producto-header">
+                    <div class="producto-header flex-c__grid cl-4 gap-20">
                         <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
                         ${imagenesHTML}
-                        <div class="producto-info">
+                        <div class="producto-info span-2">
                             <h3>${p.nombre}</h3>
                             <p class="producto-desc">${p.descripcion || 'Sin descripción'}</p>
                             <div class="producto-meta">
-                                <span class="price">$${p.precio?.toFixed(2) || '0.00'}</span>
+                                <span class="price">S/.${p.precio?.toFixed(2) || '0.00'}</span>
                                 <span class="stock ${p.stock < 5 ? 'low' : ''}">Stock: ${p.stock}</span>
                                 <span class="categoria-badge">${p.categorias?.nombre || 'Sin categoría'}</span>
                                 <span class="status ${p.activo ? 'active' : 'inactive'}">
@@ -704,7 +706,7 @@ async function cargarProductosAdmin() {
                                 ✏️ Editar
                             </button>
                             <button class="btn-toggle" onclick="toggleActivo('${p.id}', ${!p.activo})">
-                                ${p.activo ? '⏸️ Desactivar' : '▶️ Activar'}
+                                ${p.activo ? 'Desactivar' : 'Activar'}
                             </button>
                         </div>
                     </div>
