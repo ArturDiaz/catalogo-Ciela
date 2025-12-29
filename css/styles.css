@@ -702,22 +702,22 @@ body {
 }
 .btn-red{
 	background: var(--c-red);
-    color: var(--c-blanco);
+    color: white;
     &:hover,
     &:active,
     &:focus{
         background: var(--c-red-hover);
-        color: var(--c-blanco);
+        color: white;
     }
 }
 .btn-blue{
 	background: var(--c-blue);
-    color: var(--c-blanco);
+    color: white;
     &:hover,
     &:active,
     &:focus{
         background: var(--c-blue-hover);
-        color: var(--c-blanco);
+        color: white;
     }
 }
 .btn-yellow-pastel{
@@ -786,22 +786,22 @@ body {
 }
 .btn-scale-40{
     background: var(--c-scale-40);
-    color: var(--c-blanco);
+    color: white;
     &:hover, &:active, &:focus{background: var(--c-scale-50);}
 }
 .btn-scale-50{
     background: var(--c-scale-50);
-    color: var(--c-blanco);
+    color: white;
     &:hover, &:active, &:focus{background: var(--c-scale-60);}
 }
 .btn-scale-60{
     background: var(--c-scale-60);
-    color: var(--c-blanco);
+    color: white;
     &:hover, &:active, &:focus{background: var(--c-scale-70);}
 }
 .btn-scale-70{
     background: var(--c-scale-70);
-    color: var(--c-blanco);
+    color: white;
     &:hover, &:active, &:focus{background: var(--c-scale-80);}
 }
 
@@ -1122,7 +1122,6 @@ body {
 }
 
 .producto-info h3 {
-    margin: 0 0 5px 0;
     color: #333;
     font-size: 1.2em;
 }
@@ -1694,10 +1693,10 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
 
 .producto-info h3 {
-    margin: 0 0 0.8rem 0;
     color: #333;
     font-size: 1.3rem;
     font-weight: 600;
