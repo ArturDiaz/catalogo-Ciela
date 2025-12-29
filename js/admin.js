@@ -111,9 +111,9 @@ window.previewImagenesMultiples = function(input) {
                                min="1" max="${imagenesTemporales.length}"
                                onchange="actualizarOrdenImagen(${nuevaImagen.id}, this.value)">
                     </div>
-                    <button type="button" class="btn-remove-imagen" 
+                    <button type="button" class="btn btn-red-pastel" 
                             onclick="eliminarImagenTemporal(${nuevaImagen.id})">
-                        ✕ Eliminar
+                        Eliminar
                     </button>
                 </div>
             `;

@@ -30,8 +30,8 @@
     </div>
 
     <main id="admin-panel">
-        <div class="flex-c gap-30">
-            <header class="admin-header flex-c gap-20">
+        <div class="flex-c gap-20">
+            <header class="admin-header flex-c gap-30">
                 <section class="header-section flex-r ai-c jc-b">
                     <img src="img/logo-ciela.png" alt="">
                     <button onclick="logout()" class="btn btn-scale-20">Cerrar Sesión</button>
@@ -39,10 +39,10 @@
                 <h1>Panel de Control</h1>
             </header>
     
-            <ul class="nav nav-pills mb-3 p-3 flex-r gap-10" id="pills-tab" role="tablist">
+            <ul class="nav nav-pills p-3 flex-r gap-10" id="pills-tab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home"
-                        type="button" role="tab" aria-controls="pills-home" aria-selected="true">➕ Agregar Producto</button>
+                        type="button" role="tab" aria-controls="pills-home" aria-selected="true">Agregar Producto</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile"
@@ -65,9 +65,9 @@
                         <div class="form-row">
                             <input type="number" id="precio" placeholder="Precio *" step="0.01" min="0.01" required>
                             <div class="stock-input">
-                                <button type="button" class="stock-btn minus" onclick="ajustarStock('stock', -1)">-</button>
+                                <button type="button" class="btn btn-scale-30 minus" onclick="ajustarStock('stock', -1)">-</button>
                                 <input type="number" id="stock" value="0" min="0" placeholder="Stock *" required>
-                                <button type="button" class="stock-btn plus" onclick="ajustarStock('stock', 1)">+</button>
+                                <button type="button" class="btn btn-scale-30 plus" onclick="ajustarStock('stock', 1)">+</button>
                             </div>
                         </div>
                         
@@ -98,8 +98,9 @@
                             
                             <div id="loading-imagen" class="upload-loading"></div>
                         </div>
-                        
-                        <button onclick="agregarProducto()" class="btn-primary">Agregar Producto</button>
+                        <div class="flex-r jc-c-r">
+                            <button onclick="agregarProducto()" class="btn btn-primary ">Agregar Producto</button>
+                        </div>
                     </section>
                 </div>
                 <!-- SECCIÓN PRODUCTOS EXISTENTES -->
