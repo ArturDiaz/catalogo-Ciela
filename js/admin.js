@@ -675,7 +675,7 @@ async function cargarProductosAdmin() {
             
             return `
                 <div class="producto-admin" data-id="${p.id}">
-                    <div class="producto-header flex-c__grid cl-auto-3 gap-20">
+                    <div class="producto-header flex-c__grid cl-auto-3 gap-10">
                         <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
                         ${imagenesHTML}
                         <div class="producto-info span-2">
@@ -696,14 +696,14 @@ async function cargarProductosAdmin() {
                                     <button class="btn-minus btn btn-scale-20" onclick="actualizarStock('${p.id}', -5)">-5</button>
                                     <button class="btn-plus btn btn-scale-30" onclick="actualizarStock('${p.id}', 1)">+1</button>
                                     <button class="btn-plus btn btn-scale-30" onclick="actualizarStock('${p.id}', 5)">+5</button>
-                                    <button class="btn-plus btn btn-scale-30" onclick="actualizarStock('${p.id}', 10)">+10</button>
+                                    <!--<button class="btn-plus btn btn-scale-30" onclick="actualizarStock('${p.id}', 10)">+10</button>-->
                                 </div>
                                 
                                 <div class="action-buttons">
                                     <button class="btn-edit btn btn-green-pastel" onclick="editarProducto('${p.id}')">
                                         Editar
                                     </button>
-                                    <button class="btn-toggle btn btn-scale-30" onclick="toggleActivo('${p.id}', ${!p.activo})">
+                                    <button class="btn-toggle btn btn-scale-20" onclick="toggleActivo('${p.id}', ${!p.activo})">
                                         ${p.activo ? 'Desactivar' : 'Activar'}
                                     </button>
                                 </div>
