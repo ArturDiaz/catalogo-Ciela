@@ -248,7 +248,7 @@
                                     <p class="tag-categoria">${producto.categorias?.nombre || 'Sin categoría'}</p>
                                     <p class="descripcion">${producto.descripcion?.substring(0, 150) || 'Descripción no disponible'}...</p>
                                     <div class="producto-footer">
-                                        <div class="item-precio">S/.${producto.precio?.toFixed(2) || '0.00'}</div>
+                                        <div class="item-precio">S/ ${producto.precio?.toFixed(2) || '0.00'}</div>
                                         <a href="#" class="btn btn-primary" 
                                            data-bs-toggle="modal" 
                                            data-bs-target="#modalProducto${producto.id}">
@@ -412,7 +412,7 @@
                             </div>
                                     
                             <div class="producto-footer flex-r jc-b ai-c">
-                                <div class="item-precio">S/.${producto.precio?.toFixed(2) || '0.00'}</div>
+                                <div class="item-precio">S/ ${producto.precio?.toFixed(2) || '0.00'}</div>
                                 <div class="btn btn-primary" >
                                     <i class="bi bi-eye"></i> Ver Detalles
                                 </div>
@@ -461,7 +461,7 @@
                                 </div>
                                 <div class="modal-footer modal-actions ai-c">
                                     <div class="item-precio">
-                                        S/.${producto.precio?.toFixed(2) || '0.00'}
+                                        S/ ${producto.precio?.toFixed(2) || '0.00'}
                                     </div>
                                     
                                     <a href="https://wa.me/${telefonoWhatsApp}?text=Hola,%20estoy%20interesado%20en%20el%20producto:%20${encodeURIComponent(producto.nombre)}%20(Código:%20${producto.id.substring(0,8)})" 

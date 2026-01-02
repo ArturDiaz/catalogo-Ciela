@@ -152,6 +152,98 @@
             </div>
         </div>
     </main>
+
+    <!-- Modal de Bootstrap para Editar Producto -->
+    <div class="modal fade" id="modalEditarProducto" tabindex="-1" aria-labelledby="modalEditarLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarLabel">✏️ Editar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-producto-id">
+                    
+                    <div class="form-group mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" id="edit-nombre" class="form-control" placeholder="Nombre del producto" required>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea id="edit-descripcion" class="form-control" placeholder="Descripción" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Precio *</label>
+                                <input type="number" id="edit-precio" class="form-control" step="0.01" placeholder="Precio" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Stock</label>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="ajustarStockEdit(-1)">-</button>
+                                    <input type="number" id="edit-stock" class="form-control text-center" value="0" min="0">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="ajustarStockEdit(1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label class="form-label">Categoría</label>
+                        <select id="edit-categoria" class="form-select">
+                            <option value="">Sin categoría</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-check mb-3 flex-r ai-c">
+                        <input class="form-check-input producto-checkbox" type="checkbox" id="edit-activo">
+                        <label class="form-check-label ms-2" for="edit-activo">
+                            Producto activo (visible en catálogo)
+                        </label>
+                    </div>
+                    
+                    <!-- IMÁGENES EXISTENTES -->
+                    <div class="form-group mb-3">
+                        <label class="form-label">Imágenes existentes:</label>
+                        <div id="edit-imagenes-existente" class="imagenes-existente-container">
+                            <!-- Las imágenes existentes se cargarán aquí -->
+                        </div>
+                    </div>
+                    
+                    <!-- SUBIR NUEVAS IMÁGENES -->
+                    <div class="form-group mb-3">
+                        <label class="form-label">Agregar nuevas imágenes:</label>
+                        <div class="image-upload-edit">
+                            <label for="edit-imagenes-nuevas" class="upload-label-edit">
+                                <div class="upload-icon-edit">📸</div>
+                                <div class="upload-text-edit">
+                                    <strong>Seleccionar imágenes adicionales</strong>
+                                    <small>JPG, PNG, WebP, GIF - Máx. 5MB cada una</small>
+                                </div>
+                            </label>
+                            <input type="file" id="edit-imagenes-nuevas" class="form-control" accept="image/*" multiple>
+                            
+                            <div id="edit-preview-nuevas" class="preview-container-edit flex-c gap-10 mt-3">
+                                <div class="preview-placeholder-edit">
+                                    <div class="placeholder-icon-edit">➕</div>
+                                    <p>Arrastra o selecciona nuevas imágenes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="guardarEdicionCompleta()">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     
     <!-- Scripts Bootstrap -->
