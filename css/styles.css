@@ -1603,13 +1603,14 @@ a{text-decoration: none;}
     justify-content: center;
     overflow: auto;
     padding-top: 5px;
+    padding-bottom: 5px;
 }
 
 .filtro-btn {
     padding: 0.6rem 1.8rem;
-    border: 2px solid var(--c-vino);
+    border: 2px solid var(--c-pink-20);
     background: white;
-    color: var(--c-vino);
+    color: var(--c-pink);
     border-radius: 30px;
     cursor: pointer;
     font-weight: 600;
@@ -1618,15 +1619,16 @@ a{text-decoration: none;}
 }
 
 .filtro-btn:hover {
-    background: var(--c-vino);
-    color: white;
+    background: var(--c-pink-10);
+    color: var(--c-pink);;
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
 }
 
 .filtro-btn.active {
-    background: var(--c-vino);
-    color: white;
+    background: var(--c-pink-10);
+    color: var(--c-pink);
+    border-color: var(--c-pink);
     box-shadow: 0 4px 10px rgba(102, 126, 234, 0.2);
 }
 
