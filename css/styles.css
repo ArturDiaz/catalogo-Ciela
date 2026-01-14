@@ -12,13 +12,13 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background: linear-gradient(#ffffff00, #fff), url(img/bg-web-ciela.png);
+    background: linear-gradient(#ffffff00, #fff), url(../img/bg-web-ciela.png);
     background-size: cover;
     background-position: center top;
     background-attachment: fixed;
     color: var(--c-scale-90);
     @media (min-width:768px){
-        background: linear-gradient(#ffffff73, #fff), url(img/bg-web-ciela.png);
+        background: linear-gradient(#ffffff73, #fff), url(../img/bg-web-ciela.png);
     }
 }
 a, p, h1, h2, h3, h4, h5, h6, label, button{margin: 0;}
