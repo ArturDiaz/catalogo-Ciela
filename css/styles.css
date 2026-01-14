@@ -150,7 +150,7 @@ SVG ICONS
         background: transparent;
     }
     h1{
-        font-size: xxX-large;
+        font-size: x-large;
         font-weight: 600;
         color: var(--c-scale-200);
     }
@@ -745,7 +745,7 @@ SVG ICONS
 
 .producto-info h3 {
     color: #333;
-    font-size: 1.2em;
+    font-size: 13px;
 }
 
 .producto-desc {
@@ -1230,7 +1230,7 @@ SVG ICONS
     cursor: pointer;
     font-weight: 600;
     transition: all 0.3s;
-    font-size: medium;
+    font-size: small;
     i{display: none;}
     @media (min-width:768px){
         padding: 0.4rem 1.2rem;
@@ -1347,10 +1347,11 @@ SVG ICONS
 
 
 .producto-stock {
+    width: fit-content;
     display: inline-block;
     padding: 0.3rem 1rem;
     border-radius: 15px;
-    font-size: 0.85rem;
+    font-size: 9px;
     font-weight: 600;
 }
 
@@ -1410,7 +1411,7 @@ SVG ICONS
 
 .modal-producto .modal-title {
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 14px;
     color: var(--c-scale-200);
 }
 
@@ -1427,11 +1428,13 @@ SVG ICONS
 
 .modal-producto .modal-descripcion {
     color: #555;
-    line-height: 1.6;
+    line-height: 12px;
     /* margin-bottom: 1.5rem; */
     font-size: 1rem;
 }
-
+.modal-producto .item-precio{
+    font-size: 16px;
+}
 .modal-producto .modal-detalles {
     background: #f8f9fa;
     border-radius: 10px;
@@ -1579,7 +1582,7 @@ SVG ICONS
     display: none;
 }
 .item-precio{
-    font-size: 1.6em;
+    font-size: 14px;
     font-weight: 600;
     @media (min-width:768px){
         font-size: 1.2em;
