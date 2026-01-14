@@ -150,13 +150,13 @@ SVG ICONS
         background: transparent;
     }
     h1{
-        font-size: x-large;
+        font-size: 20px;
         font-weight: 600;
         color: var(--c-scale-200);
     }
 }
 .title-page{
-    font-size: xxX-large;
+    font-size: 20px;
     font-weight: 600;
     color: var(--c-scale-200);
 }
@@ -1188,6 +1188,7 @@ SVG ICONS
 }
 
 .admin-link {
+    opacity: 0.5;
 }
 
 .admin-link:hover {
@@ -1314,7 +1315,7 @@ SVG ICONS
 
 .producto-info h3 {
     color: #333;
-    font-size: 1rem;
+    font-size: 13px;
     font-weight: 600;
     line-height: 1.4;
     @media (min-width:768px){
@@ -1349,7 +1350,7 @@ SVG ICONS
 .producto-stock {
     width: fit-content;
     display: inline-block;
-    padding: 0.3rem 1rem;
+    padding: 4px 7px;
     border-radius: 15px;
     font-size: 9px;
     font-weight: 600;

@@ -23,7 +23,7 @@
         <section class="header-section flex-r ai-c jc-b">
             <img src="img/logo-ciela.png" alt="" loading="lazy" width="220" height="fit-content">
             <a href="admin.html" class="admin-link btn btn-pink-pastel">
-                <i class="bi bi-shield-lock"></i> Panel Admin
+                <i class="bi bi-shield-lock"></i> Admin
             </a>
         </section>
     </header>
@@ -255,12 +255,12 @@
                 let stockIcon = 'bi-check-circle';
                 
                 if (producto.stock === 0) {
-                    stockClass = 'stock-agotado';
-                    stockText = 'Consultar Stock';
+                    stockClass = 'Agotado';
+                    stockText = 'Consultar';
                     stockIcon = 'bi-x-circle';
                 } else if (producto.stock < 5) {
                     stockClass = 'stock-bajo';
-                    stockText = `Pocas unidades: ${producto.stock}`;
+                    stockText = `Stock: ${producto.stock}`;
                     stockIcon = 'bi-exclamation-triangle';
                 }
                 
