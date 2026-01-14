@@ -15,63 +15,80 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     
     <link rel="stylesheet" href="css/styles.css">
+
 </head>
-<body class="flex-c gap-30 page-index">
+<body class="flex-c page-index icons-svg">
     <!-- Header de la tienda -->
-     <header class="tienda-header admin-header flex-c gap-30">
+    <header class="tienda-header admin-header pt-4 pb-5 flex-c gap-5 w-responsive">
         <section class="header-section flex-r ai-c jc-b">
-            <img src="img/logo-ciela.png" alt="">
+            <img src="img/logo-ciela.png" alt="" loading="lazy" width="220" height="fit-content">
             <a href="admin.html" class="admin-link btn btn-pink-pastel">
                 <i class="bi bi-shield-lock"></i> Panel Admin
             </a>
         </section>
-        <h1>Catálogo Online</h1>
     </header>
+    <main class="main-content flex-c gap-6 p-4 pt-4.5">
+        <h1 class="title-page w-responsive">CATÁLOGO ONLINE</h1>
 
-    <!-- Carrusel de productos destacados -->
-    <section class="carrusel-section hide-desktop">
-        <div class="container">
-            <h2 class="text-center mb-4">Productos Destacados</h2>
-            
-            <div id="carrusel-productos" class="carousel-container">
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Cargando...</span>
+        <!-- Carrusel de productos destacados -->
+        <section class="carrusel-section hide">
+            <div class="container">
+                <h2 class="text-center mb-4">Productos Destacados</h2>
+                
+                <div id="carrusel-productos" class="carousel-container">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2">Cargando productos destacados...</p>
                     </div>
-                    <p class="mt-2">Cargando productos destacados...</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Filtros por categoría -->
+        <div class="container-taps w-responsive">
+            <div class="categorias-filtro">
+                <div class="filtros-container" id="filtros-categorias">
+                    <button class="filtro-btn active" data-categoria="todos">
+                        <i class="bi bi-grid"></i> Todos
+                    </button>
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- Filtros por categoría -->
-    <div class="container">
-        <div class="categorias-filtro">
-            <h2 class="text-center mb-4"><i class="bi bi-tags"></i> Categorías</h2>
-            <div class="filtros-container" id="filtros-categorias">
-                <button class="filtro-btn active" data-categoria="todos">
-                    <i class="bi bi-grid"></i> Todos
-                </button>
+        
+        <!-- Grid de productos -->
+        <section class="container-product">
+            <div class="productos-grid grid sm:cl-2 md:cl-3 lg:cl-4 gap-3 lg:gap-8" id="productos-grid">
+                <div class="sin-productos">
+                    <h3><i class="bi bi-hourglass-split"></i> Cargando productos...</h3>
+                    <p>Espera un momento por favor</p>
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Grid de productos -->
-    <main class="container">
-        <div class="productos-grid" id="productos-grid">
-            <div class="sin-productos">
-                <h3><i class="bi bi-hourglass-split"></i> Cargando productos...</h3>
-                <p>Espera un momento por favor</p>
-            </div>
-        </div>
+        </section>
     </main>
     
+    
     <!-- Footer -->
-    <footer class="tienda-footer">
-        <div class="container">
-            <p>© 2026 Ciela - Catálogo Online. Todos los derechos reservados.</p>
+    <footer class="tienda-footer text-c flex-c lg:flex-r lg:jc-b lg:ai-c gap-2 w-responsive">
+        <div class="flex-c jc-c ai-c lg:ai-l">
+            <h4>Contáctanos</h4>
+            <a href="https://wa.me/5215512345678" class="flex-r ai-c gap-1">
+                <svg class="bs-icon sm:hide" viewBox="0 0 32 32">
+                    <path d="M12 30 L24 16 12 2"/>
+                </svg>
+                <span>974 411 921</span>
+            </a>
+            
+        </div>
+        <div class="container-footer">
+            <p class="">© 2026 Ciela - Catálogo Online. </p>
+            <p>Todos los derechos reservados.</p>
         </div>
     </footer>
+    
+    <!-- css optimizado -->
+    <script src="/js/script.js"></script>
     
     <!-- Scripts Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
@@ -85,13 +102,17 @@
         let todasCategorias = [];
         let categoriaActual = 'todos';
         let telefonoWhatsApp = '974411921';
+
+        // Elimina o simplifica la función optimizarUrlCloudinary
+        // Solo úsala para las imágenes del modal, no para el código del modal mismo
         
         // Inicializar la tienda
         async function initTienda() {
             await waitForSupabase();
             await cargarCategoriasTienda();
             await cargarProductosTienda();
-            await cargarCarruselDestacados();
+            // Comenta temporalmente esto para probar
+            // await cargarCarruselDestacados();
             setupFiltros();
         }
         
@@ -126,7 +147,7 @@
                 const { data: categorias, error } = await window.supabaseClient
                     .from('categorias')
                     .select('*')
-                    .order('nombre', { ascending: true });
+                    .order('nombre', { ascending: false });
                 
                 if (error) throw error;
                 
@@ -134,13 +155,11 @@
                 renderizarCategoriasFiltro();
                 
             } catch (error) {
+                console.error('Error cargando categorías:', error);
                 document.getElementById('filtros-categorias').innerHTML = `
                     <button class="filtro-btn active" data-categoria="todos">
                         <i class="bi bi-grid"></i> Todos
                     </button>
-                    <p class="text-muted text-center w-100 mt-3">
-                        No hay categorías disponibles
-                    </p>
                 `;
             }
         }
@@ -154,9 +173,6 @@
                     <button class="filtro-btn active" data-categoria="todos">
                         <i class="bi bi-grid"></i> Todos
                     </button>
-                    <p class="text-muted text-center w-100 mt-3">
-                        No hay categorías disponibles
-                    </p>
                 `;
                 return;
             }
@@ -186,7 +202,8 @@
                         imagenes:producto_imagenes (imagen_url, orden)
                     `)
                     .eq('activo', true)
-                    .order('created_at', { ascending: false });
+                    .order('orden_visual', { ascending: true }) // Primero por orden visual
+                    .order('created_at', { ascending: false }); // Luego por fecha
                 
                 if (error) throw error;
                 
@@ -194,6 +211,7 @@
                 renderizarProductos();
                 
             } catch (error) {
+                console.error('Error cargando productos:', error);
                 document.getElementById('productos-grid').innerHTML = `
                     <div class="sin-productos">
                         <h3><i class="bi bi-emoji-frown"></i> Error cargando productos</h3>
@@ -203,100 +221,7 @@
             }
         }
         
-        // Carrusel de productos destacados
-        async function cargarCarruselDestacados() {
-            try {
-                const { data: productos, error } = await window.supabaseClient
-                    .from('productos')
-                    .select(`
-                        *,
-                        categorias: categoria_id (nombre),
-                        imagenes:producto_imagenes (imagen_url, orden)
-                    `)
-                    .eq('activo', true)
-                    .order('created_at', { ascending: false })
-                    .limit(5);
-                
-                if (error) throw error;
-                
-                if (!productos || productos.length === 0) {
-                    document.getElementById('carrusel-productos').innerHTML = `
-                        <div class="text-center">
-                            <p>No hay productos destacados disponibles</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                const carruselHTML = productos.map((producto, index) => {
-                    const imagenes = producto.imagenes || [];
-                    const imagenPrincipal = imagenes.length > 0 ? 
-                        imagenes.find(img => img.orden === 1)?.imagen_url || imagenes[0].imagen_url : 
-                        producto.imagen_url;
-                    
-                    return `
-                        <div class="carousel-item ${index === 0 ? 'active' : ''}">
-                            <div class="carousel-producto">
-                                <div class="carousel-inner">
-                                    <img src="${imagenPrincipal}" 
-                                         class="d-block w-100 carousel-image" 
-                                         alt="${producto.nombre}"
-                                         onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
-                                </div>
-                                <div class="producto-info">
-                                    <h3>${producto.nombre}</h3>
-                                    <p class="tag-categoria">${producto.categorias?.nombre || 'Sin categoría'}</p>
-                                    <p class="descripcion">${producto.descripcion?.substring(0, 150) || 'Descripción no disponible'}...</p>
-                                    <div class="producto-footer">
-                                        <div class="item-precio">S/ ${producto.precio?.toFixed(2) || '0.00'}</div>
-                                        <a href="#" class="btn btn-primary" 
-                                           data-bs-toggle="modal" 
-                                           data-bs-target="#modalProducto${producto.id}">
-                                            Ver Detalles
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-                
-                const indicadores = productos.map((_, index) => `
-                    <button type="button" data-bs-target="#carruselDestacados" 
-                            data-bs-slide-to="${index}" 
-                            class="${index === 0 ? 'active' : ''}" 
-                            aria-label="Slide ${index + 1}"></button>
-                `).join('');
-                
-                document.getElementById('carrusel-productos').innerHTML = `
-                    <div id="carruselDestacados" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-indicators">
-                            ${indicadores}
-                        </div>
-                        <div class="carousel-inner">
-                            ${carruselHTML}
-                        </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#carruselDestacados" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#carruselDestacados" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    </div>
-                `;
-                
-            } catch (error) {
-                document.getElementById('carrusel-productos').innerHTML = `
-                    <div class="text-center">
-                        <p>Error cargando productos destacados</p>
-                    </div>
-                `;
-            }
-        }
-        
-        // Renderizar productos con modal mejorado
+        // Renderizar productos con modal mejorado - VERSIÓN SIMPLIFICADA
         function renderizarProductos() {
             const grid = document.getElementById('productos-grid');
             
@@ -321,7 +246,10 @@
                 return;
             }
             
-            grid.innerHTML = productosFiltrados.map(producto => {
+            // LIMPIA EL GRID ANTES DE AGREGAR NUEVOS ELEMENTOS
+            grid.innerHTML = '';
+            
+            productosFiltrados.forEach(producto => {
                 let stockClass = 'stock-disponible';
                 let stockText = `Stock: ${producto.stock}`;
                 let stockIcon = 'bi-check-circle';
@@ -342,15 +270,55 @@
                     imagenes.find(img => img.orden === 1)?.imagen_url || imagenes[0].imagen_url : 
                     producto.imagen_url;
                 
+                // Crear elemento del producto
+                const productoElement = document.createElement('div');
+                productoElement.className = 'producto-card';
+                productoElement.setAttribute('data-categoria', producto.categorias?.id || '');
+                productoElement.setAttribute('data-bs-toggle', 'modal');
+                productoElement.setAttribute('data-bs-target', `#modalProducto${producto.id}`);
+                productoElement.innerHTML = `
+                    <div class="producto-img-container">
+                        ${producto.categorias?.nombre ? 
+                            `<span class="tag-categoria sm:hide">${categoriaNombre}</span>` : ''}
+                        
+                        <img src="${imagenPrincipal}" 
+                            alt="${producto.nombre}" 
+                            class="producto-img" loading="lazy" width="350" height="600"
+                            onerror="this.src='https://via.placeholder.com/350x600?text=Producto'">
+                    </div>
+                    
+                    <div class="producto-info p-relative">
+                        <h3>${producto.nombre}</h3>
+                        <p class="producto-desc sm:hide">${producto.descripcion || 'Sin descripción disponible'}</p>
+                        
+                        <div class="cont-stock mt-1">
+                            <span class="producto-stock ${stockClass}">
+                                <i class="bi ${stockIcon}"></i> ${stockText}
+                            </span>
+                        </div>
+                                
+                        <div class="producto-footer flex-r jc-b ai-c">
+                            <div class="item-precio">S/ ${producto.precio?.toFixed(2) || '0.00'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Crear modal para este producto
+                const modalElement = document.createElement('div');
+                modalElement.className = 'modal fade modal-producto';
+                modalElement.id = `modalProducto${producto.id}`;
+                modalElement.setAttribute('tabindex', '-1');
+                modalElement.setAttribute('aria-hidden', 'true');
+                
                 // HTML para carrusel de imágenes en modal
                 let carruselImagenesHTML = '';
                 if (imagenes.length > 0) {
                     const slides = imagenes.map((img, index) => `
                         <div class="carousel-item ${index === 0 ? 'active' : ''}">
-                            <img src="${img.imagen_url}" 
-                                 class="d-block w-100" 
-                                 alt="${producto.nombre} - Imagen ${index + 1}"
-                                 onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
+                            <img src="${img.imagen_url}" loading="lazy" width="350" height="600"
+                                class="d-block w-100" 
+                                alt="${producto.nombre} - Imagen ${index + 1}"
+                                onerror="this.src='https://via.placeholder.com/350x600?text=Imagen'">
                         </div>
                     `).join('');
                     
@@ -383,98 +351,71 @@
                 } else {
                     carruselImagenesHTML = `
                         <img src="${imagenPrincipal}" 
-                             alt="${producto.nombre}" 
-                             class="modal-imagen"
-                             onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
+                            alt="${producto.nombre}" 
+                            class="modal-imagen" loading="lazy" width="350" height="600"
+                            onerror="this.src='https://via.placeholder.com/350x600?text=Producto'">
                     `;
                 }
                 
-                return `
-                    <a href="#" class="producto-card" data-categoria="${producto.categorias?.id || ''}" data-bs-toggle="modal" data-bs-target="#modalProducto${producto.id}">
-                        <div class="producto-img-container">
-                            ${producto.categorias?.nombre ? 
-                                `<span class="tag-categoria">${categoriaNombre}</span>` : ''}
-                            
-                            <img src="${imagenPrincipal}" 
-                                 alt="${producto.nombre}" 
-                                 class="producto-img"
-                                 onerror="this.src='https://res.cloudinary.com/demo/image/upload/v1581330420/sample.jpg'">
-                        </div>
-                        
-                        <div class="producto-info">
-                            <h3>${producto.nombre}</h3>
-                            <p class="producto-desc">${producto.descripcion || 'Sin descripción disponible'}</p>
-                            
-                            <div class="cont-stock mt-1">
-                                <span class="producto-stock ${stockClass}">
-                                    <i class="bi ${stockIcon}"></i> ${stockText}
-                                </span>
+                modalElement.innerHTML = `
+                    <div class="modal-dialog modal-dialog-centered modal-md">
+                        <div class="modal-content p-relative">
+                            <div class="modal-header p-absolute">
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                                    
-                            <div class="producto-footer flex-r jc-b ai-c">
-                                <div class="item-precio">S/ ${producto.precio?.toFixed(2) || '0.00'}</div>
-                                <div class="btn btn-primary" >
-                                    <i class="bi bi-eye"></i> Ver Detalles
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                    
-                    <!-- Modal con carrusel de imágenes -->
-                    <div class="modal fade modal-producto" id="modalProducto${producto.id}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
+                            <div class="modal-body">
+                                ${carruselImagenesHTML}
+                                <div class="flex-c p-3">
                                     <h5 class="modal-title">${producto.nombre}</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    ${carruselImagenesHTML}
-                                    <div class="flex-c p-3">
-                                        <p class="modal-descripcion">
-                                            ${producto.descripcion || 'No hay descripción disponible para este producto.'}
-                                        </p>
-                                        
-                                        <div class="modal-detalles hide-mobile">
-                                            <div class="detalle-item">
-                                                <span class="detalle-label">Categoría:</span>
-                                                <span class="detalle-valor">${categoriaNombre}</span>
-                                            </div>
-                                            <div class="detalle-item">
-                                                <span class="detalle-label">Estado:</span>
-                                                <span class="detalle-valor ${stockClass}">
-                                                    <i class="bi ${stockIcon}"></i> ${stockText}
-                                                </span>
-                                            </div>
-                                            <div class="detalle-item">
-                                                <span class="detalle-label">Código:</span>
-                                                <span class="detalle-valor">${producto.id.substring(0, 8)}</span>
-                                            </div>
-                                            ${imagenes.length > 1 ? `
-                                            <div class="detalle-item">
-                                                <span class="detalle-label">Imágenes:</span>
-                                                <span class="detalle-valor">${imagenes.length} disponibles</span>
-                                            </div>
-                                            ` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="modal-footer modal-actions ai-c">
-                                    <div class="item-precio">
-                                        S/ ${producto.precio?.toFixed(2) || '0.00'}
-                                    </div>
+                                    <p class="modal-descripcion">
+                                        ${producto.descripcion || 'No hay descripción disponible para este producto.'}
+                                    </p>
                                     
-                                    <a href="https://wa.me/${telefonoWhatsApp}?text=Hola,%20estoy%20interesado%20en%20el%20producto:%20${encodeURIComponent(producto.nombre)}%20(Código:%20${producto.id.substring(0,8)})" 
-                                        target="_blank" 
-                                        class="btn btn-whatsapp">
-                                        <i class="bi bi-whatsapp"></i>Me interesa
-                                    </a>
-                                </div>   
+                                    <div class="modal-detalles hide-mobile md:flex-c gap-2">
+                                        <div class="detalle-item">
+                                            <span class="detalle-label">Categoría:</span>
+                                            <span class="detalle-valor">${categoriaNombre}</span>
+                                        </div>
+                                        <div class="detalle-item">
+                                            <span class="detalle-label">Estado:</span>
+                                            <span class="detalle-valor ${stockClass}">
+                                                <i class="bi ${stockIcon}"></i> ${stockText}
+                                            </span>
+                                        </div>
+                                        <div class="detalle-item">
+                                            <span class="detalle-label">Código:</span>
+                                            <span class="detalle-valor">${producto.id.substring(0, 8)}</span>
+                                        </div>
+                                        ${imagenes.length > 1 ? `
+                                        <div class="detalle-item">
+                                            <span class="detalle-label">Imágenes:</span>
+                                            <span class="detalle-valor">${imagenes.length} disponibles</span>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
                             </div>
+                            <div class="modal-footer modal-actions ai-c">
+                                <div class="item-precio">
+                                    S/ ${producto.precio?.toFixed(2) || '0.00'}
+                                </div>
+                                
+                                <a href="https://wa.me/${telefonoWhatsApp}?text=Hola,%20estoy%20interesado%20en%20el%20producto:%20${encodeURIComponent(producto.nombre)}%20(Código:%20${producto.id.substring(0,8)})" 
+                                    target="_blank" 
+                                    class="btn btn-whatsapp">
+                                    <i class="bi bi-whatsapp"></i>Me interesa
+                                </a>
+                            </div>   
                         </div>
                     </div>
                 `;
-            }).join('');
+                
+                // Agregar ambos elementos al DOM
+                grid.appendChild(productoElement);
+                // Agregar el modal al final del body para asegurar su funcionamiento
+                document.body.appendChild(modalElement);
+            });
+            
         }
         
         // Configurar eventos de filtros
@@ -482,22 +423,28 @@
             const botonesFiltro = document.querySelectorAll('.filtro-btn');
             
             botonesFiltro.forEach(boton => {
-                boton.addEventListener('click', () => {
+                boton.addEventListener('click', (e) => {
+                    e.preventDefault();
                     botonesFiltro.forEach(b => b.classList.remove('active'));
                     boton.classList.add('active');
                     categoriaActual = boton.dataset.categoria;
                     renderizarProductos();
                     
-                    document.querySelector('.productos-grid').scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+                    // Scroll suave hacia los productos
+                    setTimeout(() => {
+                        document.querySelector('.productos-grid').scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }, 300);
                 });
             });
         }
         
         // Iniciar cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', initTienda);
+        document.addEventListener('DOMContentLoaded', function() {
+            initTienda();
+        });
         
     </script>
 </body>

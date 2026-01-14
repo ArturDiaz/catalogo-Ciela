@@ -1,10 +1,12 @@
-// js/admin.js - VERSIÓN CORREGIDA USANDO MODAL DE BOOTSTRAP
+// js/admin.js - VERSIÓN COMPLETA CON ELIMINACIÓN EN CLOUDINARY
 
 // ====================
 // CONFIGURACIÓN
 // ====================
 const CLOUDINARY_CLOUD_NAME = 'dqmlubvqo';
 const CLOUDINARY_UPLOAD_PRESET = 'ciela_products';
+const CLOUDINARY_API_KEY = '487988181226323'; // Necesitarás esto para algunas operaciones
+const CLOUDINARY_API_SECRET = '1hSqURfIfrmZzNtmiSbGPXDc9T0'; // Solo para backend, NO lo pongas en frontend
 
 // ====================
 // VARIABLES GLOBALES
@@ -14,6 +16,7 @@ let inputImagenes = null;
 let productoEnEdicion = null;
 let editarImagenesTemp = [];
 let editarImagenesAEliminar = [];
+let imagenesParaEliminarDeCloudinary = []; // Para trackear qué eliminar
 
 // ====================
 // INICIALIZACIÓN
@@ -231,8 +234,9 @@ async function subirImagenACloudinary(file) {
         throw new Error('Solo se permiten imágenes');
     }
     
-    if (file.size > 10 * 1024 * 1024) {
-        throw new Error('Máximo 10MB por imagen');
+    // REDUCE de 10MB a 2MB (línea importante)
+    if (file.size > 2 * 1024 * 1024) {
+        throw new Error('Máximo 2MB por imagen');
     }
     
     const formData = new FormData();
@@ -240,6 +244,10 @@ async function subirImagenACloudinary(file) {
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
     formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
     formData.append('folder', 'ciela/productos');
+    
+    // ¡AGREGA ESTAS 2 LÍNEAS! (optimización automática)
+    formData.append('transformation', 'q_auto:eco,f_auto,w_1000');
+    formData.append('quality', 'auto:good');
     
     const response = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -252,7 +260,85 @@ async function subirImagenACloudinary(file) {
     }
     
     const data = await response.json();
-    return { url: data.secure_url, publicId: data.public_id };
+    return { 
+        url: data.secure_url, 
+        publicId: data.public_id,
+        assetId: data.asset_id 
+    };
+}
+
+// ====================
+// ELIMINAR DE CLOUDINARY
+// ====================
+async function eliminarImagenDeCloudinary(publicId) {
+    try {
+        if (!publicId) {
+            console.warn('No public_id proporcionado para eliminar');
+            return false;
+        }
+        
+        // Crear signature para autenticación (opcional pero recomendado)
+        // Para simplificar, usaremos solo el upload_preset
+        const formData = new FormData();
+        formData.append('public_id', publicId);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        formData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
+        
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/destroy`,
+            { 
+                method: 'POST', 
+                body: formData 
+            }
+        );
+        
+        const result = await response.json();
+        
+        if (response.ok && result.result === 'ok') {
+            console.log(`✅ Imagen eliminada de Cloudinary: ${publicId}`);
+            return true;
+        } else {
+            console.warn(`⚠️ No se pudo eliminar imagen ${publicId}:`, result.error?.message || 'Error desconocido');
+            return false;
+        }
+        
+    } catch (error) {
+        console.error('Error en eliminarImagenDeCloudinary:', error);
+        return false;
+    }
+}
+
+// Función para extraer public_id de la URL de Cloudinary
+function extraerPublicIdDeUrl(url) {
+    try {
+        if (!url || !url.includes('cloudinary.com')) {
+            return null;
+        }
+        
+        // Ejemplo de URL: https://res.cloudinary.com/dqmlubvqo/image/upload/v1234567890/ciela/productos/xyz.jpg
+        const urlParts = url.split('/');
+        
+        // Buscar el índice de 'upload'
+        const uploadIndex = urlParts.indexOf('upload');
+        if (uploadIndex === -1 || uploadIndex >= urlParts.length - 1) {
+            return null;
+        }
+        
+        // La parte después de 'upload' contiene la versión y la ruta
+        const pathAfterUpload = urlParts.slice(uploadIndex + 1).join('/');
+        
+        // Eliminar la extensión del archivo
+        const withoutExtension = pathAfterUpload.replace(/\.[^/.]+$/, '');
+        
+        // Eliminar la versión (v1234567890/) si existe
+        const withoutVersion = withoutExtension.replace(/^v\d+\//, '');
+        
+        return withoutVersion;
+        
+    } catch (error) {
+        console.error('Error extrayendo public_id:', error);
+        return null;
+    }
 }
 
 // ====================
@@ -406,6 +492,7 @@ window.agregarProducto = async function() {
         descripcion: document.getElementById('descripcion').value.trim(),
         precio: parseFloat(document.getElementById('precio').value) || 0,
         stock: parseInt(document.getElementById('stock').value) || 0,
+        orden_visual: parseInt(document.getElementById('orden_visual').value) || 0,
         categoria_id: document.getElementById('categoria').value || null,
         activo: true
     };
@@ -466,7 +553,7 @@ window.agregarProducto = async function() {
 };
 
 async function subirImagenesProducto(productoId) {
-    const imagenesPromises = imagenesTemporales.map(async (imagenTemp) => {
+    const imagenesPromises = imagenesTemporales.map(async (imagenTemp, index) => {
         try {
             const imagenData = await subirImagenACloudinary(imagenTemp.file);
             
@@ -475,6 +562,7 @@ async function subirImagenesProducto(productoId) {
                 .insert({
                     producto_id: productoId,
                     imagen_url: imagenData.url,
+                    public_id: imagenData.publicId,
                     orden: imagenTemp.orden
                 });
             
@@ -516,7 +604,7 @@ async function cargarProductosAdmin() {
             .select(`
                 *,
                 categorias: categoria_id (nombre),
-                imagenes:producto_imagenes (id, imagen_url, orden)
+                imagenes:producto_imagenes (id, imagen_url, public_id, orden)
             `)
             .order('created_at', { ascending: false });
         
@@ -531,6 +619,11 @@ async function cargarProductosAdmin() {
     }
 }
 
+// ====================
+// GESTIÓN DE ORDEN VISUAL
+// ====================
+
+// Función actualizada para incluir el orden visual
 function actualizarListaProductosUI(productos) {
     const lista = document.getElementById('lista-productos');
     if (!lista) return;
@@ -539,6 +632,9 @@ function actualizarListaProductosUI(productos) {
         lista.innerHTML = '<p class="no-products">No hay productos registrados</p>';
         return;
     }
+    
+    // Ordenar productos por orden_visual descendente (los más altos primero)
+    productos.sort((a, b) => b.orden_visual - a.orden_visual);
     
     lista.innerHTML = productos.map(p => {
         const imagenes = p.imagenes || [];
@@ -550,7 +646,20 @@ function actualizarListaProductosUI(productos) {
                     <input type="checkbox" class="producto-checkbox" data-id="${p.id}">
                     ${generarHTMLImagenesProducto(imagenes)}
                     <div class="producto-info span-2">
-                        <h3>${p.nombre}</h3>
+                        <div class="flex-r jc-b ai-c mb-2">
+                            <h3>${p.nombre}</h3>
+                            <div class="flex-r ai-c gap-2">
+                                <span class="badge btn-scale-30">Orden: ${p.orden_visual || 0}</span>
+                                <!--<button class="btn btn-sm btn-outline-primary" 
+                                        onclick="cambiarOrdenVisual('${p.id}', 'up')">
+                                    <i class="bi bi-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="cambiarOrdenVisual('${p.id}', 'down')">
+                                    <i class="bi bi-arrow-down"></i>
+                                </button>-->
+                            </div>
+                        </div>
                         <p class="producto-desc">${p.descripcion || 'Sin descripción'}</p>
                         <div class="producto-meta">
                             <span class="price">S/ ${p.precio?.toFixed(2) || '0.00'}</span>
@@ -587,6 +696,60 @@ function actualizarListaProductosUI(productos) {
         `;
     }).join('');
 }
+
+// Función para cambiar el orden visual
+window.cambiarOrdenVisual = async function(productoId, direccion) {
+    try {
+        const { data: producto } = await window.supabaseClient
+            .from('productos')
+            .select('orden_visual')
+            .eq('id', productoId)
+            .single();
+        
+        let nuevoOrden = producto.orden_visual || 0;
+        
+        if (direccion === 'up') {
+            nuevoOrden += 1;
+        } else if (direccion === 'down') {
+            nuevoOrden = Math.max(0, nuevoOrden - 1);
+        }
+        
+        await window.supabaseClient
+            .from('productos')
+            .update({ orden_visual: nuevoOrden })
+            .eq('id', productoId);
+        
+        await cargarProductosAdmin();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+// Función para establecer orden específico
+window.establecerOrdenEspecifico = async function(productoId) {
+    const nuevoOrden = prompt('Ingresa el número de orden (0-999):', '0');
+    
+    if (nuevoOrden === null) return;
+    
+    const ordenNum = parseInt(nuevoOrden);
+    if (isNaN(ordenNum) || ordenNum < 0 || ordenNum > 999) {
+        alert('Por favor ingresa un número entre 0 y 999');
+        return;
+    }
+    
+    try {
+        await window.supabaseClient
+            .from('productos')
+            .update({ orden_visual: ordenNum })
+            .eq('id', productoId);
+        
+        await cargarProductosAdmin();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
 
 function generarHTMLImagenesProducto(imagenes) {
     if (imagenes.length === 0) return '';
@@ -655,7 +818,7 @@ window.cargarProductoParaEditar = async function(productoId) {
             .select(`
                 *,
                 categorias: categoria_id (id, nombre),
-                imagenes:producto_imagenes (id, imagen_url, orden)
+                imagenes:producto_imagenes (id, imagen_url, public_id, orden)
             `)
             .eq('id', productoId)
             .single();
@@ -682,7 +845,8 @@ function llenarFormularioEdicion(producto) {
     document.getElementById('edit-precio').value = producto.precio;
     document.getElementById('edit-stock').value = producto.stock;
     document.getElementById('edit-activo').checked = producto.activo;
-    
+    document.getElementById('edit-orden_visual').value = producto.orden_visual || 0;
+
     // Llenar categorías
     const selectCategoria = document.getElementById('edit-categoria');
     if (selectCategoria && window.categorias) {
@@ -716,7 +880,7 @@ function cargarImagenesExistentes(imagenes) {
                     <div class="imagen-existente-header">
                         <span class="imagen-orden">#${index + 1}</span>
                         <button type="button" class="btn btn-sm btn-danger btn-eliminar-imagen" 
-                                onclick="marcarImagenParaEliminar('${img.id}')">
+                                onclick="marcarImagenParaEliminar('${img.id}', '${img.public_id || extraerPublicIdDeUrl(img.imagen_url) || ''}')">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -745,18 +909,48 @@ function inicializarEventosEdicion() {
     }
 }
 
-window.marcarImagenParaEliminar = function(imagenId) {
-    if (!confirm('¿Estás seguro de eliminar esta imagen?')) return;
+window.marcarImagenParaEliminar = async function(imagenId, publicId) {
+    if (!confirm('¿Estás seguro de eliminar esta imagen?\nSe borrará también de Cloudinary.')) return;
     
-    if (!editarImagenesAEliminar.includes(imagenId)) {
-        editarImagenesAEliminar.push(imagenId);
-    }
-    
-    // Marcar visualmente
-    const elemento = document.querySelector(`[data-imagen-id="${imagenId}"]`);
-    if (elemento) {
-        elemento.style.opacity = '0.5';
-        elemento.querySelector('.btn-eliminar-imagen').disabled = true;
+    try {
+        // Si no tenemos public_id, intentar extraerlo de la URL
+        if (!publicId) {
+            // Obtener la imagen para conseguir el public_id
+            const { data: imagen } = await window.supabaseClient
+                .from('producto_imagenes')
+                .select('imagen_url, public_id')
+                .eq('id', imagenId)
+                .single();
+            
+            if (imagen) {
+                publicId = imagen.public_id || extraerPublicIdDeUrl(imagen.imagen_url);
+            }
+        }
+        
+        // Guardar para eliminar de Cloudinary después
+        if (publicId) {
+            imagenesParaEliminarDeCloudinary.push({
+                imagenId,
+                publicId
+            });
+        }
+        
+        // Marcar para eliminar de la base de datos
+        if (!editarImagenesAEliminar.includes(imagenId)) {
+            editarImagenesAEliminar.push(imagenId);
+        }
+        
+        // Marcar visualmente
+        const elemento = document.querySelector(`[data-imagen-id="${imagenId}"]`);
+        if (elemento) {
+            elemento.style.opacity = '0.5';
+            elemento.style.border = '2px solid red';
+            elemento.querySelector('.btn-eliminar-imagen').disabled = true;
+            elemento.querySelector('.btn-eliminar-imagen').innerHTML = '<i class="bi bi-check-circle"></i>';
+        }
+        
+    } catch (error) {
+        alert('Error al preparar eliminación: ' + error.message);
     }
 };
 
@@ -843,6 +1037,19 @@ window.eliminarNuevaImagenTemporal = function(imagenId) {
     }
 };
 
+// Función auxiliar para ajustar orden
+window.ajustarOrdenEdit = function(cambio) {
+    const input = document.getElementById('edit-orden_visual');
+    if (!input) return;
+    
+    let valor = parseInt(input.value) || 0;
+    valor += cambio;
+    if (valor < 0) valor = 0;
+    if (valor > 999) valor = 999;
+    input.value = valor;
+};
+
+// Función auxiliar para ajustar stock en modal de edición
 window.ajustarStockEdit = function(cambio) {
     const input = document.getElementById('edit-stock');
     if (!input) return;
@@ -866,6 +1073,7 @@ window.guardarEdicionCompleta = async function() {
         descripcion: document.getElementById('edit-descripcion').value.trim(),
         precio: parseFloat(document.getElementById('edit-precio').value) || 0,
         stock: parseInt(document.getElementById('edit-stock').value) || 0,
+        orden_visual: parseInt(document.getElementById('edit-orden_visual').value) || 0,
         categoria_id: document.getElementById('edit-categoria').value || null,
         activo: document.getElementById('edit-activo').checked
     };
@@ -895,7 +1103,7 @@ window.guardarEdicionCompleta = async function() {
             .update(producto)
             .eq('id', productoId);
         
-        // 2. Eliminar imágenes marcadas para eliminar
+        // 2. Eliminar imágenes marcadas para eliminar (primero de la BD)
         for (const imagenId of editarImagenesAEliminar) {
             await window.supabaseClient
                 .from('producto_imagenes')
@@ -903,7 +1111,12 @@ window.guardarEdicionCompleta = async function() {
                 .eq('id', imagenId);
         }
         
-        // 3. Subir nuevas imágenes si las hay
+        // 3. Eliminar imágenes de Cloudinary (después de borrar de la BD)
+        for (const imgInfo of imagenesParaEliminarDeCloudinary) {
+            await eliminarImagenDeCloudinary(imgInfo.publicId);
+        }
+        
+        // 4. Subir nuevas imágenes si las hay
         if (editarImagenesTemp.length > 0) {
             // Obtener el orden más alto actual
             const { data: imagenesActuales } = await window.supabaseClient
@@ -928,6 +1141,7 @@ window.guardarEdicionCompleta = async function() {
                         .insert({
                             producto_id: productoId,
                             imagen_url: imagenData.url,
+                            public_id: imagenData.publicId,
                             orden: ordenInicio + i
                         });
                     
@@ -946,6 +1160,7 @@ window.guardarEdicionCompleta = async function() {
         // Limpiar variables
         editarImagenesTemp = [];
         editarImagenesAEliminar = [];
+        imagenesParaEliminarDeCloudinary = [];
         
         await cargarProductosAdmin();
         
@@ -960,6 +1175,147 @@ window.guardarEdicionCompleta = async function() {
 };
 
 // ====================
+// ELIMINACIÓN MASIVA CON CLOUDINARY
+// ====================
+window.eliminarSeleccionados = async function() {
+    const checkboxes = document.querySelectorAll('.producto-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('Selecciona al menos un producto');
+        return;
+    }
+    
+    if (!confirm(`¿Eliminar ${checkboxes.length} producto(s)?\nSe borrarán también TODAS las imágenes asociadas de Cloudinary.\nEsta acción NO se puede deshacer.`)) {
+        return;
+    }
+    
+    const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
+    
+    const btn = document.querySelector('#btn-eliminar-seleccionados');
+    const originalText = btn ? btn.textContent : 'Eliminar Seleccionados';
+    
+    if (btn) {
+        btn.textContent = 'Eliminando...';
+        btn.disabled = true;
+    }
+    
+    try {
+        // 1. Primero obtener todas las imágenes de los productos a eliminar
+        const { data: imagenes, error: imagenesError } = await window.supabaseClient
+            .from('producto_imagenes')
+            .select('id, imagen_url, public_id')
+            .in('producto_id', ids);
+        
+        if (imagenesError) throw imagenesError;
+        
+        // 2. Eliminar imágenes de Cloudinary
+        if (imagenes && imagenes.length > 0) {
+            let eliminadosExitosos = 0;
+            let fallidos = 0;
+            
+            for (const imagen of imagenes) {
+                try {
+                    let publicId = imagen.public_id;
+                    
+                    // Si no hay public_id en la BD, intentar extraerlo de la URL
+                    if (!publicId && imagen.imagen_url) {
+                        publicId = extraerPublicIdDeUrl(imagen.imagen_url);
+                    }
+                    
+                    if (publicId) {
+                        const eliminado = await eliminarImagenDeCloudinary(publicId);
+                        if (eliminado) {
+                            eliminadosExitosos++;
+                        } else {
+                            fallidos++;
+                        }
+                    } else {
+                        fallidos++;
+                        console.warn('No se pudo obtener public_id para:', imagen.imagen_url);
+                    }
+                } catch (error) {
+                    fallidos++;
+                    console.error('Error eliminando imagen:', error);
+                }
+            }
+            
+            console.log(`Resultado eliminación Cloudinary: ${eliminadosExitosos} exitosos, ${fallidos} fallidos`);
+        }
+        
+        // 3. Eliminar productos de la base de datos
+        await window.supabaseClient
+            .from('productos')
+            .delete()
+            .in('id', ids);
+        
+        alert(`✅ ${ids.length} producto(s) eliminados\nImágenes eliminadas de Cloudinary: ${imagenes?.length || 0}`);
+        await cargarProductosAdmin();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+};
+
+// ====================
+// LIMPIEZA DE IMÁGENES HUÉRFANAS
+// ====================
+window.limpiarImagenesHuerfanas = async function() {
+    if (!confirm('¿Buscar y mostrar imágenes huérfanas en Cloudinary?\nEsto solo mostrará información, no eliminará nada.')) {
+        return;
+    }
+    
+    try {
+        // 1. Obtener todas las imágenes en uso de nuestra BD
+        const { data: imagenesEnUso, error } = await window.supabaseClient
+            .from('producto_imagenes')
+            .select('public_id, imagen_url, producto_id');
+        
+        if (error) throw error;
+        
+        const publicIdsEnUso = imagenesEnUso
+            .filter(img => img.public_id)
+            .map(img => ({
+                publicId: img.public_id,
+                productoId: img.producto_id,
+                url: img.imagen_url
+            }));
+        
+        // 2. Mostrar estadísticas
+        const mensaje = `
+📊 ESTADO DE IMÁGENES:
+
+✅ En uso en base de datos: ${publicIdsEnUso.length} imágenes
+
+💡 Para limpiar imágenes no usadas:
+1. Ve a https://cloudinary.com/console
+2. Ve a "Media Library"
+3. Usa el filtro "View unused assets"
+4. Selecciona y elimina las imágenes no usadas
+
+⚠️ Nota: Esta limpieza debe hacerse manualmente en el panel de Cloudinary
+por seguridad y para evitar eliminar imágenes por error.
+        `;
+        
+        alert(mensaje);
+        
+        // 3. Opcional: Mostrar lista detallada en consola
+        console.group('📋 Imágenes en uso:');
+        publicIdsEnUso.forEach((img, index) => {
+            console.log(`${index + 1}. ${img.publicId} (Producto: ${img.productoId})`);
+        });
+        console.groupEnd();
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+};
+
+// ====================
 // ACCIONES MASIVAS
 // ====================
 window.seleccionarTodos = function() {
@@ -969,34 +1325,6 @@ window.seleccionarTodos = function() {
     checkboxes.forEach(cb => {
         cb.checked = selectAll;
     });
-};
-
-window.eliminarSeleccionados = async function() {
-    const checkboxes = document.querySelectorAll('.producto-checkbox:checked');
-    
-    if (checkboxes.length === 0) {
-        alert('Selecciona al menos un producto');
-        return;
-    }
-    
-    if (!confirm(`¿Eliminar ${checkboxes.length} producto(s)?\nEsta acción no se puede deshacer.`)) {
-        return;
-    }
-    
-    const ids = Array.from(checkboxes).map(cb => cb.dataset.id);
-    
-    try {
-        await window.supabaseClient
-            .from('productos')
-            .delete()
-            .in('id', ids);
-        
-        alert(`✅ ${ids.length} producto(s) eliminados`);
-        await cargarProductosAdmin();
-        
-    } catch (error) {
-        alert('Error: ' + error.message);
-    }
 };
 
 window.desactivarSeleccionados = async function() {
@@ -1049,6 +1377,19 @@ async function initAdmin() {
     await waitForSupabase();
     await verificarSesion();
     inicializarInputImagenes();
+    
+    // Agregar botón de limpieza si no existe
+    setTimeout(() => {
+        const accionesMasivas = document.querySelector('.acciones-masivas');
+        if (accionesMasivas && !document.getElementById('btn-limpiar-huerfanas')) {
+            const btnLimpiar = document.createElement('button');
+            btnLimpiar.id = 'btn-limpiar-huerfanas';
+            btnLimpiar.className = 'btn btn-warning';
+            btnLimpiar.innerHTML = '<i class="bi bi-trash"></i> Limpiar Imágenes Huérfanas';
+            btnLimpiar.onclick = () => window.limpiarImagenesHuerfanas();
+            accionesMasivas.appendChild(btnLimpiar);
+        }
+    }, 1000);
 }
 
 document.addEventListener('DOMContentLoaded', initAdmin);
