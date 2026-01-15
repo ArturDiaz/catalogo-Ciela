@@ -5,8 +5,6 @@
 // ====================
 const CLOUDINARY_CLOUD_NAME = 'dqmlubvqo';
 const CLOUDINARY_UPLOAD_PRESET = 'ciela_products';
-const CLOUDINARY_API_KEY = '487988181226323'; // Necesitarás esto para algunas operaciones
-const CLOUDINARY_API_SECRET = '1hSqURfIfrmZzNtmiSbGPXDc9T0'; // Solo para backend, NO lo pongas en frontend
 
 // ====================
 // VARIABLES GLOBALES
