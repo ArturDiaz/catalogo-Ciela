@@ -33,10 +33,9 @@
 
     <main id="admin-panel">
         <header class="admin-header pt-4 pb-5 flex-c gap-5 w-responsive">
-            <section class="header-section flex-r ai-c jc-b">
+            <section class="header-section flex-r ai-c jc-b gap-3">
                 <img src="img/logo-ciela.png" alt="">
-                <a href="index.html" class="btn btn-white">
-                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                <a href="index.html" class="btn btn-white">Cerrar Sesión
                 </a>
             </section>
             
@@ -62,30 +61,27 @@
                 <div class="tab-pane fade show active" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
                     <section class="product-list">
                         <div class="list-header">
-                            <div class="flex-r jc-b">
+                            <div class="flex-r jc-b ai-c">
                                 <h2>Productos Existentes</h2>
                                 <a data-bs-target="#bulk-actions" data-bs-toggle="collapse" class="btn btn-scale-20 hide-desktop">
-                                    <i class="bi bi-funnel"></i> Filtro
+                                    <i class="bi bi-funnel"></i>
                                 </a>
                             </div>
                             
                             <div id="bulk-actions" class="bulk-actions collapse">
-                                <label class="select-all">
-                                    <input type="checkbox" id="select-all" onchange="seleccionarTodos()">
-                                    Seleccionar todos
-                                </label>
-                                
-                                <button onclick="desactivarSeleccionados()" class="btn btn-red-pastel">
-                                    <i class="bi bi-eye-slash"></i> Desactivar
-                                </button>
-                                <button onclick="eliminarSeleccionados()" class="btn btn-red"
-                                        title="Elimina productos Y sus imágenes de Cloudinary">
-                                    <i class="bi bi-trash-fill"></i> Eliminar con Imágenes
-                                </button>
-                                <button onclick="limpiarImagenesHuerfanas()" class="btn btn-warning" 
-                                        title="Ver imágenes no usadas en Cloudinary">
-                                    <i class="bi bi-cloud-check"></i> Limpiar Huérfanas
-                                </button>
+                                <div class="sm:grid cl-2 flex-r gap-3">
+                                    <label class="select-all span-2">
+                                        <input type="checkbox" id="select-all" onchange="seleccionarTodos()">
+                                        Seleccionar todos
+                                    </label>
+                                    
+                                    <button onclick="desactivarSeleccionados()" class="btn btn-red-pastel">
+                                        <i class="bi bi-eye-slash"></i> Desactivar
+                                    </button>
+                                    <button onclick="eliminarSeleccionados()" class="btn btn-red">
+                                        <i class="bi bi-trash-fill"></i> Eliminar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         

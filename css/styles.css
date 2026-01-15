@@ -23,13 +23,6 @@ body {
 }
 a, p, h1, h2, h3, h4, h5, h6, label, button{margin: 0;}
 a{text-decoration: none;}
-.hide{display: none;}
-@media (max-width:767px){
-    .sm\:hide,.hide-mobile{display: none;}
-}
-@media (min-width:768px){
-    .md\:hide,.hide-desktop{display: none;}
-}
 
 .w-responsive {width: 100%;padding: 0 20px; margin: auto;}
 @media (min-width: 640px) { .w-responsive { max-width: 640px; padding: 0 5px;} }
@@ -419,7 +412,7 @@ SVG ICONS
     &:hover, &:active, &:focus{background: var(--c-scale-80);}
 }
 .btn-white{
-    background: rgba(255, 255, 255, 0.892);
+    background: rgba(255, 255, 255, 0.692);
     color: var(--c-scale-70);
     &:hover, &:active, &:focus{background: white;}
 }
@@ -606,9 +599,9 @@ SVG ICONS
 
 /* ===== LISTA DE PRODUCTOS ===== */
 .product-list {
-    padding: 20px;
+    /* padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); */
 }
 
 .list-header {
@@ -639,7 +632,6 @@ SVG ICONS
     cursor: pointer;
     color: #666;
     @media (max-width:767px){
-        max-width: 130px;
         line-height: 1.2;
     }
 }

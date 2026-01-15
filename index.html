@@ -287,7 +287,7 @@
                             onerror="this.src='https://via.placeholder.com/350x600?text=Producto'">
                     </div>
                     
-                    <div class="producto-info p-relative">
+                    <div class="producto-info relative">
                         <h3>${producto.nombre}</h3>
                         <p class="producto-desc sm:hide">${producto.descripcion || 'Sin descripción disponible'}</p>
                         
@@ -359,8 +359,8 @@
                 
                 modalElement.innerHTML = `
                     <div class="modal-dialog modal-dialog-centered modal-md">
-                        <div class="modal-content p-relative">
-                            <div class="modal-header p-absolute">
+                        <div class="modal-content relative">
+                            <div class="modal-header absolute">
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
@@ -371,7 +371,7 @@
                                         ${producto.descripcion || 'No hay descripción disponible para este producto.'}
                                     </p>
                                     
-                                    <div class="modal-detalles hide-mobile md:flex-c gap-2">
+                                    <div class="modal-detalles sm:hide md:flex-c gap-2">
                                         <div class="detalle-item">
                                             <span class="detalle-label">Categoría:</span>
                                             <span class="detalle-valor">${categoriaNombre}</span>
