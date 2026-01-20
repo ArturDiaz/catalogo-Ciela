@@ -442,16 +442,16 @@ async function cargarProductosAdmin() {
             return `
             <div class="producto-item">
                 <div class="producto-header">
-                    <div class="flex-r ai-c jc-sb">
-                        <h3 class="producto-nombre">${producto.nombre}</h3>
+                    <div class="flex-r ai-c jc-sb gap-1">
                         <label class="checkbox-container">
                             <input type="checkbox" 
-                                   class="producto-checkbox" 
-                                   data-id="${producto.id}"
-                                   data-nombre="${producto.nombre}"
-                                   onchange="actualizarAccionesMasivas()">
+                                class="producto-checkbox" 
+                                data-id="${producto.id}"
+                                data-nombre="${producto.nombre}"
+                                onchange="actualizarAccionesMasivas()">
                             <span class="checkmark"></span>
                         </label>
+                        <h3 class="producto-nombre">${producto.nombre}</h3>
                     </div>
                     <div class="producto-metadata">
                         <span class="badge ${producto.activo ? 'bg-success' : 'bg-secondary'}">
@@ -463,7 +463,7 @@ async function cargarProductosAdmin() {
                     </div>
                 </div>
                 
-                <div class="producto-content">
+                <div class="producto-content grid cl-3 gap-3">
                     <div class="producto-imagen">
                         <img src="${imagenPrincipal}" 
                              alt="${producto.nombre}" 
@@ -476,8 +476,8 @@ async function cargarProductosAdmin() {
                         ` : ''}
                     </div>
                     
-                    <div class="producto-info">
-                        <p class="producto-descripcion">${producto.descripcion || 'Sin descripción'}</p>
+                    <div class="producto-info span-2">
+                        <p class="producto-descripcion sm:hide">${producto.descripcion || 'Sin descripción'}</p>
                         
                         <div class="producto-detalles">
                             <div class="detalle-item">
@@ -523,7 +523,7 @@ async function cargarProductosAdmin() {
                     <button class="btn ${producto.activo ? 'btn-secondary' : 'btn-success'} btn-sm" 
                             onclick="toggleActivoProducto('${producto.id}', ${producto.activo})">
                         <i class="bi ${producto.activo ? 'bi-eye-slash' : 'bi-eye'}"></i>
-                        ${producto.activo ? 'Desactivar' : 'Activar'}
+                        ${producto.activo ? 'Now' : 'Active'}
                     </button>
                 </div>
             </div>
@@ -1140,11 +1140,6 @@ document.addEventListener('DOMContentLoaded', function() {
             margin-bottom: 15px;
         }
         
-        .producto-content {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
-        }
         
         .producto-imagen {
             flex: 0 0 200px;
@@ -1161,13 +1156,6 @@ document.addEventListener('DOMContentLoaded', function() {
             flex: 1;
         }
         
-        .producto-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-        }
         
         .producto-metadata {
             display: flex;
