@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Migración Final - Con storage_path</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://xkzxforgasbdamgtarcz.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_CJ5yPSBEGz7wgeSmChIWoA_aEMdNOlg';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { persistSession: true }
+        });
+    </script>
+</head>
+<body>
+    <h1>Migración FINAL con storage_path</h1>
+    
+    <div>
+        <label>Email: <input type="email" id="email" value="admin@gmail.com"></label><br>
+        <label>Contraseña: <input type="password" id="password"></label><br>
+        <button onclick="migracionFinal()">Iniciar Migración Final</button>
+        <button onclick="verificarTabla()">Verificar Estructura</button>
+    </div>
+    
+    <div id="log" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; max-height: 500px; overflow-y: auto; font-family: monospace;"></div>
+    
+    <script>
+    function agregarLog(mensaje, tipo = 'info') {
+        const log = document.getElementById('log');
+        const color = tipo === 'error' ? 'red' : 
+                     tipo === 'success' ? 'green' : 
+                     tipo === 'warning' ? 'orange' : 'black';
+        
+        log.innerHTML += `<p style="color: ${color}; margin: 2px 0;">${mensaje}</p>`;
+        log.scrollTop = log.scrollHeight;
+    }
+    
+    async function verificarTabla() {
+        agregarLog('🔍 Verificando estructura de tabla producto_imagenes...');
+        
+        try {
+            // Verificar si podemos seleccionar storage_path
+            const { data, error } = await supabaseClient
+                .from('producto_imagenes')
+                .select('id, imagen_url, storage_path')
+                .limit(1);
+            
+            if (error) {
+                agregarLog(`❌ Error: ${error.message}`, 'error');
+            } else {
+                agregarLog(`✅ Tabla verificada. storage_path existe.`, 'success');
+                agregarLog(`📊 Muestra: ${JSON.stringify(data[0] || 'No hay datos')}`);
+            }
+            
+        } catch (error) {
+            agregarLog(`❌ Error inesperado: ${error.message}`, 'error');
+        }
+    }
+    
+    async function migracionFinal() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        if (!email || !password) {
+            agregarLog('❌ Ingresa email y contraseña', 'error');
+            return;
+        }
+        
+        agregarLog('🚀 INICIANDO MIGRACIÓN FINAL', 'success');
+        
+        // 1. AUTENTICAR
+        agregarLog('🔐 Autenticando...');
+        
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (authError) {
+            agregarLog(`❌ Error de autenticación: ${authError.message}`, 'error');
+            return;
+        }
+        
+        agregarLog(`✅ Autenticado como: ${authData.user.email}`, 'success');
+        
+        // 2. OBTENER PRODUCTOS CON STORAGE_PATH
+        agregarLog('🔍 Buscando productos...');
+        
+        const { data: productos, error: productosError } = await supabaseClient
+            .from('productos')
+            .select(`
+                id, nombre,
+                imagenes:producto_imagenes (id, imagen_url, orden, storage_path)
+            `)
+            .not('imagenes', 'is', null);
+        
+        if (productosError) {
+            agregarLog(`❌ Error obteniendo productos: ${productosError.message}`, 'error');
+            return;
+        }
+        
+        agregarLog(`📦 Encontrados ${productos.length} productos`, 'success');
+        
+        let totalMigrados = 0;
+        let totalYaMigrados = 0;
+        let totalErrores = 0;
+        let totalNoCloudinary = 0;
+        
+        // 3. PROCESAR PRODUCTOS
+        for (let i = 0; i < productos.length; i++) {
+            const producto = productos[i];
+            
+            if (!producto.imagenes || producto.imagenes.length === 0) continue;
+            
+            agregarLog(`\n🔄 [${i+1}/${productos.length}] Producto: ${producto.nombre} (${producto.imagenes.length} imágenes)`);
+            
+            for (let j = 0; j < producto.imagenes.length; j++) {
+                const imagen = producto.imagenes[j];
+                
+                // Verificar si ya fue migrada
+                if (imagen.storage_path) {
+                    agregarLog(`   ⏭️ Imagen ${j+1}: Ya migrada (storage_path: ${imagen.storage_path})`, 'warning');
+                    totalYaMigrados++;
+                    continue;
+                }
+                
+                // Verificar si es URL de Cloudinary
+                if (!imagen.imagen_url || !imagen.imagen_url.includes('cloudinary')) {
+                    agregarLog(`   ⏭️ Imagen ${j+1}: No es URL de Cloudinary`, 'warning');
+                    totalNoCloudinary++;
+                    continue;
+                }
+                
+                try {
+                    agregarLog(`   📥 Imagen ${j+1}: Descargando...`);
+                    
+                    // Descargar de Cloudinary
+                    const response = await fetch(imagen.imagen_url);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
+                    const blob = await response.blob();
+                    
+                    // Crear nombre único
+                    const timestamp = Date.now();
+                    const random = Math.random().toString(36).substring(2, 10);
+                    const extension = 'jpg'; // Cloudinary generalmente usa jpg
+                    const fileName = `migrado_${timestamp}_${random}.${extension}`;
+                    const storagePath = `${producto.id}/${fileName}`;
+                    
+                    const file = new File([blob], fileName, { type: 'image/jpeg' });
+                    
+                    // Subir a Supabase Storage
+                    agregarLog(`   📤 Subiendo a storage: ${storagePath}`);
+                    
+                    const { data: uploadData, error: uploadError } = await supabaseClient
+                        .storage
+                        .from('product-images')
+                        .upload(storagePath, file, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+                    
+                    if (uploadError) throw uploadError;
+                    
+                    // Obtener URL pública
+                    const { data: { publicUrl } } = supabaseClient.storage
+                        .from('product-images')
+                        .getPublicUrl(storagePath);
+                    
+                    // Actualizar en BD
+                    agregarLog(`   💾 Actualizando registro en BD...`);
+                    
+                    const { error: updateError } = await supabaseClient
+                        .from('producto_imagenes')
+                        .update({
+                            imagen_url: publicUrl,
+                            storage_path: storagePath,
+                            creado_en: new Date().toISOString()
+                        })
+                        .eq('id', imagen.id);
+                    
+                    if (updateError) throw updateError;
+                    
+                    totalMigrados++;
+                    agregarLog(`   ✅ Migrada exitosamente! (Total: ${totalMigrados})`, 'success');
+                    
+                    // Pausa para no sobrecargar
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                } catch (error) {
+                    totalErrores++;
+                    agregarLog(`   ❌ Error: ${error.message}`, 'error');
+                    
+                    // Pausa más larga en error
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+            
+            // Pausa entre productos
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        // 4. RESUMEN FINAL
+        agregarLog('\n' + '='.repeat(50), 'success');
+        agregarLog('🎉 MIGRACIÓN COMPLETADA', 'success');
+        agregarLog('='.repeat(50), 'success');
+        agregarLog(`✅ Migradas nuevas: ${totalMigrados}`, 'success');
+        agregarLog(`⏭️ Ya migradas: ${totalYaMigrados}`, 'warning');
+        agregarLog(`⚠️ No Cloudinary: ${totalNoCloudinary}`, 'warning');
+        agregarLog(`❌ Errores: ${totalErrores}`, totalErrores > 0 ? 'error' : 'success');
+        agregarLog(`📊 Total procesadas: ${totalMigrados + totalYaMigrados + totalNoCloudinary + totalErrores}`);
+        
+        // 5. VERIFICAR MIGRACIÓN
+        agregarLog('\n🔍 Verificando migración...');
+        
+        const { data: verificacion } = await supabaseClient
+            .from('producto_imagenes')
+            .select('COUNT(*) as total')
+            .not('storage_path', 'is', null)
+            .single();
+        
+        agregarLog(`📊 Total con storage_path: ${verificacion?.total || 0}`, 'success');
+    }
+    </script>
+</body>
+</html>

@@ -202,8 +202,8 @@
                         imagenes:producto_imagenes (imagen_url, orden)
                     `)
                     .eq('activo', true)
-                    .order('orden_visual', { ascending: true }) // Primero por orden visual
-                    .order('created_at', { ascending: false }); // Luego por fecha
+                    .order('orden_visual', { ascending: false }) // Orden visual descendente
+                    .order('created_at', { ascending: false });
                 
                 if (error) throw error;
                 
