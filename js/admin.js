@@ -1120,10 +1120,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .detalle-label {
             font-weight: bold;
             color: #666;
+            font-size: 12px;
         }
         
         .detalle-valor {
             color: #333;
+            font-size: 12px;
         }
         
         .producto-item {
