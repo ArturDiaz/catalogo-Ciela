@@ -65,10 +65,10 @@ function inicializarModalEdicion() {
     if (modal) {
         modal.addEventListener('hidden.bs.modal', function() {
             // Resetear variables al cerrar modal
-            window.productoEnEdicion = null;
-            window.editarImagenesTemp = [];
-            window.editarImagenesAEliminar = [];
-            window.editarImagenesPathsAEliminar = [];
+            productoEnEdicion = null;
+            editarImagenesTemp = [];
+            editarImagenesAEliminar = [];
+            editarImagenesPathsAEliminar = [];
         });
     }
     
@@ -85,37 +85,48 @@ function inicializarModalEdicion() {
 
 // ==================== GESTIÓN DE IMÁGENES TEMPORALES ====================
 function inicializarInputImagenes() {
+    // ✅ Obtener el input CADA VEZ, no confiar en variable global
+    const inputElement = document.getElementById('imagenes');
+    if (!inputElement) {
+        console.warn('⚠️ Input de imágenes no encontrado');
+        return;
+    }
+    
+    // Guardar referencia
+    inputImagenes = inputElement;
+    
+    // Remover listeners anteriores para evitar duplicados
+    inputImagenes.replaceWith(inputImagenes.cloneNode(true));
     inputImagenes = document.getElementById('imagenes');
     
-    if (inputImagenes) {
-        inputImagenes.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                previewImagenesMultiples(this);
-            }
+    // Configurar eventos
+    inputImagenes.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            previewImagenesMultiples(this);
+        }
+    });
+    
+    // Configurar arrastrar y soltar
+    const uploadArea = document.querySelector('.image-upload');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
         });
         
-        // Configurar arrastrar y soltar
-        const uploadArea = document.querySelector('.image-upload');
-        if (uploadArea) {
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
             
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-            
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                
-                if (e.dataTransfer.files.length > 0) {
-                    inputImagenes.files = e.dataTransfer.files;
-                    previewImagenesMultiples(inputImagenes);
-                }
-            });
-        }
+            if (e.dataTransfer.files.length > 0) {
+                inputImagenes.files = e.dataTransfer.files;
+                previewImagenesMultiples(inputImagenes);
+            }
+        });
     }
 }
 
@@ -258,6 +269,73 @@ window.eliminarImagenTemporal = function(imagenId) {
         `;
     }
 };
+
+// ==================== FUNCIONES DE DEBUG Y RESET ====================
+
+// Función para debuggear estado de imágenes
+function debugEstadoImagenes() {
+    console.log('🔍 DEBUG - Estado de imágenes:');
+    console.log('- imagenesTemporales:', imagenesTemporales.length, 'imágenes');
+    console.log('- inputImagenes:', inputImagenes ? 'Encontrado' : 'No encontrado');
+    if (inputImagenes) {
+        console.log('- files en input:', inputImagenes.files.length);
+    }
+    
+    // Verificar si el input está en DOM
+    const inputEnDOM = document.getElementById('imagenes');
+    console.log('- input en DOM:', inputEnDOM ? 'Sí' : 'No');
+}
+
+// Función para resetear completamente el estado de imágenes
+function resetearSistemaImagenes() {
+    console.log('🔄 Reseteando sistema de imágenes...');
+    
+    // 1. Resetear variables
+    imagenesTemporales = [];
+    editarImagenesTemp = [];
+    editarImagenesAEliminar = [];
+    editarImagenesPathsAEliminar = [];
+    
+    // 2. Resetear input de agregar producto
+    const inputAgregar = document.getElementById('imagenes');
+    if (inputAgregar) {
+        inputAgregar.value = '';
+    }
+    
+    // 3. Resetear previews
+    const previewAgregar = document.getElementById('preview-imagenes');
+    if (previewAgregar) {
+        previewAgregar.innerHTML = `
+            <div class="preview-placeholder">
+                <div class="placeholder-icon">🖼️</div>
+                <p>Arrastra o selecciona múltiples imágenes</p>
+                <small>Primera imagen será la principal</small>
+            </div>
+        `;
+    }
+    
+    // 4. Resetear input de edición
+    const inputEditar = document.getElementById('edit-imagenes-nuevas');
+    if (inputEditar) {
+        inputEditar.value = '';
+    }
+    
+    // 5. Resetear preview de edición
+    const previewEditar = document.getElementById('edit-preview-nuevas');
+    if (previewEditar) {
+        previewEditar.innerHTML = `
+            <div class="preview-placeholder-edit">
+                <div class="placeholder-icon-edit">➕</div>
+                <p>Arrastra o selecciona nuevas imágenes</p>
+            </div>
+        `;
+    }
+    
+    // 6. Reinicializar input de imágenes
+    inicializarInputImagenes();
+    
+    console.log('✅ Sistema de imágenes reseteado');
+}
 
 // ==================== AUTENTICACIÓN ====================
 window.login = async function() {
@@ -689,6 +767,9 @@ window.eliminarSeleccionados = async function() {
             window.mostrarAlerta(mensajeResumen, 'error');
         }
         
+        // ✅ IMPORTANTE: Resetear sistema de imágenes después de eliminar
+        resetearSistemaImagenes();
+        
         // Recargar lista de productos
         await cargarProductosAdmin();
         
@@ -703,6 +784,72 @@ window.eliminarSeleccionados = async function() {
             btn.textContent = originalText;
             btn.disabled = false;
             if (btnIcon) btnIcon.className = 'bi bi-trash-fill';
+        }
+    }
+};
+
+// ==================== ELIMINACIÓN INDIVIDUAL ====================
+window.eliminarProductoIndividual = async function(productoId, productoNombre) {
+    if (!confirm(`¿Estás seguro de eliminar el producto "${productoNombre}"?\n\nEsta acción eliminará:\n• Producto de la base de datos\n• Todas las imágenes del storage\n• NO se puede deshacer`)) {
+        return;
+    }
+    
+    const btn = document.querySelector(`[onclick="eliminarProductoIndividual('${productoId}', '${productoNombre}')"]`);
+    const originalText = btn ? btn.textContent : 'Eliminar';
+    const originalIcon = btn ? btn.querySelector('i')?.className : '';
+    
+    if (btn) {
+        btn.textContent = 'Eliminando...';
+        btn.disabled = true;
+        if (btn.querySelector('i')) {
+            btn.querySelector('i').className = 'bi bi-hourglass-split';
+        }
+    }
+    
+    try {
+        // Obtener todas las imágenes del producto
+        const { data: imagenes } = await window.supabaseClient
+            .from('producto_imagenes')
+            .select('storage_path')
+            .eq('producto_id', productoId);
+        
+        // Eliminar imágenes del storage si existen
+        if (imagenes && imagenes.length > 0) {
+            const storagePaths = imagenes
+                .map(img => img.storage_path)
+                .filter(path => path && path.trim() !== '');
+            
+            if (storagePaths.length > 0) {
+                await window.supabaseClient.storage
+                    .from('product-images')
+                    .remove(storagePaths);
+            }
+        }
+        
+        // Eliminar producto de la base de datos
+        const { error } = await window.supabaseClient
+            .from('productos')
+            .delete()
+            .eq('id', productoId);
+        
+        if (error) throw error;
+        
+        // ✅ IMPORTANTE: Resetear sistema de imágenes después de eliminar
+        resetearSistemaImagenes();
+        
+        window.mostrarAlerta(`✅ Producto "${productoNombre}" eliminado exitosamente`, 'success');
+        await cargarProductosAdmin();
+        
+    } catch (error) {
+        console.error('Error eliminando producto:', error);
+        window.mostrarAlerta(`❌ Error eliminando producto: ${error.message}`, 'error');
+    } finally {
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+            if (btn.querySelector('i')) {
+                btn.querySelector('i').className = originalIcon;
+            }
         }
     }
 };
@@ -724,7 +871,7 @@ window.cargarProductoParaEditar = async function(productoId) {
         
         if (error) throw error;
         
-        window.productoEnEdicion = producto;
+        productoEnEdicion = producto;
         
         // Llenar formulario básico
         document.getElementById('edit-producto-id').value = producto.id;
@@ -778,9 +925,9 @@ window.cargarProductoParaEditar = async function(productoId) {
         }
         
         // Resetear imágenes temporales
-        window.editarImagenesTemp = [];
-        window.editarImagenesAEliminar = [];
-        window.editarImagenesPathsAEliminar = [];
+        editarImagenesTemp = [];
+        editarImagenesAEliminar = [];
+        editarImagenesPathsAEliminar = [];
         
         const previewContainer = document.getElementById('edit-preview-nuevas');
         if (previewContainer) {
@@ -807,9 +954,9 @@ window.eliminarImagenExistente = function(imagenId, storagePath) {
     }
     
     // Marcar para eliminación posterior
-    window.editarImagenesAEliminar.push(imagenId);
+    editarImagenesAEliminar.push(imagenId);
     if (storagePath) {
-        window.editarImagenesPathsAEliminar.push(storagePath);
+        editarImagenesPathsAEliminar.push(storagePath);
     }
     
     // Ocultar en la UI
@@ -866,26 +1013,26 @@ window.guardarEdicionCompleta = async function() {
         if (updateError) throw updateError;
         
         // 2. Eliminar imágenes marcadas para eliminación
-        if (window.editarImagenesAEliminar.length > 0) {
-            console.log(`🗑️ Eliminando ${window.editarImagenesAEliminar.length} imágenes de la BD`);
+        if (editarImagenesAEliminar.length > 0) {
+            console.log(`🗑️ Eliminando ${editarImagenesAEliminar.length} imágenes de la BD`);
             
             // Eliminar de la BD
             const { error: deleteError } = await window.supabaseClient
                 .from('producto_imagenes')
                 .delete()
-                .in('id', window.editarImagenesAEliminar);
+                .in('id', editarImagenesAEliminar);
             
             if (deleteError) {
                 console.warn('⚠️ Error eliminando imágenes de BD:', deleteError);
             }
             
             // Opcional: Eliminar del storage si se desea
-            if (window.editarImagenesPathsAEliminar.length > 0) {
+            if (editarImagenesPathsAEliminar.length > 0) {
                 try {
                     await window.supabaseClient.storage
                         .from('product-images')
-                        .remove(window.editarImagenesPathsAEliminar);
-                    console.log(`✅ ${window.editarImagenesPathsAEliminar.length} imágenes eliminadas del storage`);
+                        .remove(editarImagenesPathsAEliminar);
+                    console.log(`✅ ${editarImagenesPathsAEliminar.length} imágenes eliminadas del storage`);
                 } catch (storageError) {
                     console.warn('⚠️ Error eliminando del storage:', storageError);
                 }
@@ -893,18 +1040,18 @@ window.guardarEdicionCompleta = async function() {
         }
         
         // 3. Subir nuevas imágenes si existen
-        if (window.editarImagenesTemp.length > 0) {
-            console.log(`📤 Subiendo ${window.editarImagenesTemp.length} nuevas imágenes`);
+        if (editarImagenesTemp.length > 0) {
+            console.log(`📤 Subiendo ${editarImagenesTemp.length} nuevas imágenes`);
             
-            const files = window.editarImagenesTemp.map(img => img.file);
+            const files = editarImagenesTemp.map(img => img.file);
             
             try {
                 const uploadedImages = await window.imageStorage.uploadMultipleImages(files, productoId);
                 
                 // Guardar en la tabla producto_imagenes
                 const imagenesPromises = uploadedImages.map((uploadedImage, index) => {
-                    const orden = window.editarImagenesTemp[index]?.orden || 
-                                 (window.productoEnEdicion?.producto_imagenes?.length || 0) + index + 1;
+                    const orden = editarImagenesTemp[index]?.orden || 
+                                 (productoEnEdicion?.producto_imagenes?.length || 0) + index + 1;
                     
                     return window.supabaseClient
                         .from('producto_imagenes')
@@ -934,10 +1081,10 @@ window.guardarEdicionCompleta = async function() {
         await cargarProductosAdmin();
         
         // 5. Resetear variables temporales
-        window.productoEnEdicion = null;
-        window.editarImagenesTemp = [];
-        window.editarImagenesAEliminar = [];
-        window.editarImagenesPathsAEliminar = [];
+        productoEnEdicion = null;
+        editarImagenesTemp = [];
+        editarImagenesAEliminar = [];
+        editarImagenesPathsAEliminar = [];
         
     } catch (error) {
         console.error('❌ Error guardando cambios:', error);
@@ -1058,6 +1205,27 @@ function limpiarFormularioProducto() {
     imagenesTemporales = [];
 }
 
+// ==================== TOGGLE ACTIVO ====================
+window.toggleActivoProducto = async function(productoId, estadoActual) {
+    try {
+        const nuevoEstado = !estadoActual;
+        
+        const { error } = await window.supabaseClient
+            .from('productos')
+            .update({ activo: nuevoEstado })
+            .eq('id', productoId);
+        
+        if (error) throw error;
+        
+        window.mostrarAlerta(`✅ Producto ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`, 'success');
+        await cargarProductosAdmin();
+        
+    } catch (error) {
+        console.error('Error cambiando estado:', error);
+        window.mostrarAlerta(`❌ Error: ${error.message}`, 'error');
+    }
+};
+
 // ==================== CSS ADICIONAL ====================
 document.addEventListener('DOMContentLoaded', function() {
     // Agregar estilos para las imágenes
@@ -1171,3 +1339,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ==================== INICIALIZAR ====================
 document.addEventListener('DOMContentLoaded', initAdmin);
+
+// ==================== EXPORTAR FUNCIONES PARA DEBUG ====================
+window.debugEstadoImagenes = debugEstadoImagenes;
+window.resetearSistemaImagenes = resetearSistemaImagenes;

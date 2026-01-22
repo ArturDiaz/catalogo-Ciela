@@ -301,67 +301,6 @@
     
     // ==================== FUNCIONES DE EDICIÓN ====================
     
-    // Llenar formulario de edición
-    window.llenarFormularioEdicion = function(producto) {
-        document.getElementById('edit-producto-id').value = producto.id;
-        document.getElementById('edit-nombre').value = producto.nombre || '';
-        document.getElementById('edit-descripcion').value = producto.descripcion || '';
-        document.getElementById('edit-precio').value = producto.precio || 0;
-        document.getElementById('edit-stock').value = producto.stock || 0;
-        document.getElementById('edit-orden_visual').value = producto.orden_visual || 0;
-        document.getElementById('edit-activo').checked = producto.activo !== false;
-        
-        // Seleccionar categoría
-        const selectCategoria = document.getElementById('edit-categoria');
-        if (selectCategoria && producto.categoria_id) {
-            setTimeout(() => {
-                selectCategoria.value = producto.categoria_id;
-            }, 100);
-        }
-    };
-    
-    // Inicializar eventos de edición
-    window.inicializarEventosEdicion = function() {
-        const inputNuevas = document.getElementById('edit-imagenes-nuevas');
-        if (inputNuevas) {
-            inputNuevas.addEventListener('change', function() {
-                if (this.files.length > 0) {
-                    previewImagenesEdicion(this);
-                }
-            });
-        }
-    };
-    
-    // Preview imágenes en edición
-    window.previewImagenesEdicion = function(input) {
-        const previewContainer = document.getElementById('edit-preview-nuevas');
-        if (!previewContainer) return;
-        
-        // Limpiar placeholder si existe
-        const placeholder = previewContainer.querySelector('.preview-placeholder-edit');
-        if (placeholder) placeholder.remove();
-        
-        // Limpiar imágenes temporales anteriores
-        editarImagenesTemp = [];
-        
-        Array.from(input.files).forEach((file, index) => {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const nuevaImagen = {
-                    file: file,
-                    previewUrl: e.target.result,
-                    id: Date.now() + Math.random()
-                };
-                
-                editarImagenesTemp.push(nuevaImagen);
-                crearElementoPrevisualizacionEdicion(nuevaImagen, previewContainer);
-            };
-            
-            reader.readAsDataURL(file);
-        });
-    };
-    
     function crearElementoPrevisualizacionEdicion(imagen, container) {
         const previewItem = document.createElement('div');
         previewItem.className = 'imagen-preview-item-edit';
@@ -388,30 +327,6 @@
         `;
         
         container.appendChild(previewItem);
-    };
-    
-    // Eliminar imagen temporal en edición
-    window.eliminarImagenEdicionTemp = function(imagenId) {
-        const imagenIndex = editarImagenesTemp.findIndex(img => img.id === imagenId);
-        if (imagenIndex === -1) return;
-        
-        editarImagenesTemp.splice(imagenIndex, 1);
-        
-        const elemento = document.getElementById(`edit-preview-${imagenId}`);
-        if (elemento) elemento.remove();
-        
-        // Mostrar placeholder si no hay imágenes
-        if (editarImagenesTemp.length === 0) {
-            const previewContainer = document.getElementById('edit-preview-nuevas');
-            if (previewContainer) {
-                previewContainer.innerHTML = `
-                    <div class="preview-placeholder-edit">
-                        <div class="placeholder-icon-edit">➕</div>
-                        <p>Arrastra o selecciona nuevas imágenes</p>
-                    </div>
-                `;
-            }
-        }
     };
     
     // ==================== TEST DE CONEXIÓN ====================
@@ -447,13 +362,5 @@
     
     // Ejecutar test cuando esté listo
     setTimeout(testConexion, 1500);
-    
-    // Asegurar que las variables globales estén disponibles
-    window.imagenesTemporales = [];
-    window.inputImagenes = null;
-    window.productoEnEdicion = null;
-    window.editarImagenesTemp = [];
-    window.editarImagenesAEliminar = [];
-    window.editarImagenesPathsAEliminar = [];
     
 })();
