@@ -82,11 +82,55 @@ const CONFIG = {
         'bottom': 'bottom',
 
         // Hide
-        'hide': 'display'
+        'hide': 'display',
+
+        // Width
+        'w': 'width',
+        'min-w': 'min-width',
+        'max-w': 'max-width',
+        'w-responsive': 'width',
+        
+        // Height (alto)
+        'h': 'height',
+        'min-h': 'min-height',
+        'max-h': 'max-height',
+        
+        // Size (cuadrado)
+        'size': ['width', 'height'],
+        
+        // Text Size
+        'text': 'font-size',
+        
+        // Font Weight
+        'font': 'font-weight',
+        
+        // Border
+        'border': 'border-width',
+        'rounded': 'border-radius',
+        
+        // Opacity
+        'opacity': 'opacity',
+        
+        // Z-Index
+        'z': 'z-index',
+        
+        // Display
+        'block': 'display',
+        'inline': 'display',
+        'inline-block': 'display',
+        'hidden': 'display',
+        
+        // Overflow
+        'overflow': 'overflow',
+        'overflow-x': 'overflow-x',
+        'overflow-y': 'overflow-y',
+        
+        // Cursor
+        'cursor': 'cursor'
 
     },
     
-    // CONFIGURACIÓN DE VALORES ESPECIALES
+    // VALORES ESPECIALES
     valoresEspeciales: {
         'grid': 'grid',
         'flex': 'flex',
@@ -113,55 +157,426 @@ const CONFIG = {
         'fixed': 'fixed',
         'static': 'static',
         'sticky': 'sticky',
-        'hide': 'none'
+        'hide': 'none',
+
+        // Width values
+        'w-auto': 'auto',
+        'w-full': '100%',
+        'w-screen': '100vw',
+        'w-min': 'min-content',
+        'w-max': 'max-content',
+        'w-fit': 'fit-content',
+        
+        // Height values
+        'h-auto': 'auto',
+        'h-full': '100%',
+        'h-screen': '100vh',
+        'h-min': 'min-content',
+        'h-max': 'max-content',
+        'h-fit': 'fit-content',
+        
+        // Size values
+        'size-full': '100%',
+        
+        // Display values
+        'block': 'block',
+        'inline': 'inline',
+        'inline-block': 'inline-block',
+        'hidden': 'none',
+        
+        // Overflow values
+        'overflow-auto': 'auto',
+        'overflow-hidden': 'hidden',
+        'overflow-visible': 'visible',
+        'overflow-scroll': 'scroll',
+        
+        // Cursor values
+        'cursor-pointer': 'pointer',
+        'cursor-default': 'default',
+        'cursor-text': 'text',
+        'cursor-move': 'move',
+        'cursor-not-allowed': 'not-allowed',
+        
+        // Font weight values
+        'font-thin': '100',
+        'font-light': '300',
+        'font-normal': '400',
+        'font-medium': '500',
+        'font-semibold': '600',
+        'font-bold': '700',
+        'font-extrabold': '800',
+        'font-black': '900',
+        
+        // Opacity values (0-100)
+        'opacity-0': '0',
+        'opacity-25': '0.25',
+        'opacity-50': '0.5',
+        'opacity-75': '0.75',
+        'opacity-100': '1'
+    },
+
+    // CLASES COMPLEJAS
+    clasesComplejas: {
+        'w-responsive': `
+            width: 100%;
+            max-width: 100%;
+            padding: 0 20px; 
+            margin: auto;
+        }
+        @media (min-width: 640px) {
+            .w-responsive {
+                max-width: 640px;
+                padding: 0 10px; 
+            }
+        }
+        @media (min-width: 768px) {
+            .w-responsive {
+                max-width: 768px;
+                padding: 0px; 
+            }
+        }
+        @media (min-width: 1024px) {
+            .w-responsive {
+                max-width: 1024px;
+            }
+        }
+        @media (min-width: 1280px) {
+            .w-responsive {
+                max-width: 1280px;
+            }
+        }`
     },
     
     // Conversión de valores a CSS - REESTRUCTURADA
     valorToCSS: (claseNum, tipo = '', claseCompleta = '') => {
-        // Para clases especiales (flexbox)
+        // 1. Primero verificar valores especiales
         if (CONFIG.valoresEspeciales[claseCompleta]) {
             return CONFIG.valoresEspeciales[claseCompleta];
         }
         
-        if (claseNum === '0') return '0';
-        const num = parseFloat(claseNum);
-        
-        // Si es una clase de columnas (cl-3, cl-4, etc.)
-        if (tipo === 'cl') {
-            return `repeat(${num}, minmax(0, 1fr))`;
+        // 2. Si es clase compleja, devolver null
+        if (CONFIG.clasesComplejas && CONFIG.clasesComplejas[tipo]) {
+            return null;
         }
         
-        // Si es una clase de span (span-2, span-3, etc.)
-        if (tipo === 'span') {
-            return `span ${num} / span ${num}`;
-        }
-        if (tipo === 'gap'){
-            return (num * 0.25) + 'em !important';
+        // 3. Validar que el valor sea aceptable
+        if (!esValorValidoParaTipo(claseNum, tipo)) {
+            console.warn(`⚠️ Valor inválido para ${tipo}: ${claseNum}`);
+            return null;
         }
         
-        // Para spacing (padding, margin, gap)
-        return (num * 0.25) + 'em';
+        // 4. Casos especiales por tipo
+        switch(tipo) {
+            // Z-INDEX: NO tiene unidades, solo el número
+            case 'z':
+                return claseNum; // Solo el número, sin unidades
+                
+            // GRID COLUMNS
+            case 'cl':
+                return `repeat(${parseInt(claseNum)}, minmax(0, 1fr))`;
+                
+            // GRID SPAN
+            case 'span':
+                return `span ${claseNum} / span ${claseNum}`;
+                
+            // GAP (con !important)
+            case 'gap':
+            case 'gap-x':
+            case 'gap-y':
+                return (parseFloat(claseNum) * 0.25) + 'em !important';
+                
+            // BORDER WIDTH (px)
+            case 'border':
+                return claseNum + 'px';
+                
+            // BORDER RADIUS
+            case 'rounded':
+                if (claseNum === 'full') return '9999px';
+                return (parseFloat(claseNum) * 0.25) + 'rem';
+                
+            // FONT SIZE (rem)
+            case 'text':
+                return (parseFloat(claseNum) * 0.25) + 'rem';
+                
+            // WIDTH/HEIGHT/SIZE - usar función especial
+            case 'w':
+            case 'min-w':
+            case 'max-w':
+            case 'h':
+            case 'min-h':
+            case 'max-h':
+            case 'size':
+                return convertirValorDimension(claseNum, tipo);
+                
+            // PADDING/MARGIN (em)
+            case 'p':
+            case 'px':
+            case 'py':
+            case 'pt':
+            case 'pr':
+            case 'pb':
+            case 'pl':
+            case 'm':
+            case 'mx':
+            case 'my':
+            case 'mt':
+            case 'mr':
+            case 'mb':
+            case 'ml':
+                if (claseNum === '0') return '0';
+                return (parseFloat(claseNum) * 0.25) + 'em';
+                
+            // FONT WEIGHT (sin unidades)
+            case 'font':
+                // Si ya es un número, devolverlo tal cual
+                if (/^\d+$/.test(claseNum)) {
+                    return claseNum;
+                }
+                // Si es un nombre, convertirlo
+                const pesos = {
+                    'thin': '100',
+                    'light': '300',
+                    'normal': '400',
+                    'medium': '500',
+                    'semibold': '600',
+                    'bold': '700',
+                    'extrabold': '800',
+                    'black': '900'
+                };
+                return pesos[claseNum] || '400';
+                
+            // OPACITY (0-1)
+            case 'opacity':
+                const opacidades = {
+                    '0': '0',
+                    '25': '0.25',
+                    '50': '0.5',
+                    '75': '0.75',
+                    '100': '1'
+                };
+                return opacidades[claseNum] || claseNum;
+                
+            // OVERFLOW y CURSOR (valores directos)
+            case 'overflow':
+            case 'overflow-x':
+            case 'overflow-y':
+            case 'cursor':
+                return claseNum;
+                
+            default:
+                // Por defecto, intentar como número
+                if (claseNum === '0') return '0';
+                const num = parseFloat(claseNum);
+                if (!isNaN(num)) {
+                    return (num * 0.25) + 'em';
+                }
+                return claseNum;
+        }
     }
 };
 
-// CACHÉ SIMPLIFICADO - SOLO LO ESENCIAL
+// CACHÉ SIMPLIFICADO
 const CACHE = {
-    // Cache de CSS ya generado (evita regenerar lo mismo)
     cssGenerado: new Map(),
-    
-    // Cache de parsing de nombres de clase
     parsedClases: new Map(),
-    
-    // Limpiar caché (útil para debugging)
     limpiar: function() {
         this.cssGenerado.clear();
         this.parsedClases.clear();
     }
 };
 
-// FUNCIÓN PARA PARSEAR CLASES CON CACHÉ
+// FUNCIÓN AUXILIAR PARA CONVERTIR VALORES DE DIMENSIÓN
+function convertirValorDimension(claseNum, tipo) {
+    // Casos especiales primero
+    const valoresEspeciales = {
+        'auto': 'auto',
+        'full': '100%',
+        'screen': '100vw',
+        'min': 'min-content',
+        'max': 'max-content',
+        'fit': 'fit-content'
+    };
+    
+    if (valoresEspeciales[claseNum]) {
+        return valoresEspeciales[claseNum];
+    }
+    
+    // VERIFICAR FRACCIONES (1/2, 2/3, etc.) - CORRECCIÓN IMPORTANTE
+    if (claseNum.includes('/')) {
+        const partes = claseNum.split('/');
+        if (partes.length === 2) {
+            const numerador = parseFloat(partes[0]);
+            const denominador = parseFloat(partes[1]);
+            if (!isNaN(numerador) && !isNaN(denominador) && denominador !== 0) {
+                return `${(numerador / denominador) * 100}%`;
+            }
+        }
+        return null; // Fracción inválida
+    }
+    
+    // Verificar si tiene unidad
+    const regexUnidad = /^(\d+(\.\d+)?)(px|rem|em|%|vw|vh)$/;
+    if (regexUnidad.test(claseNum)) {
+        return claseNum; // Devolver con unidad tal cual
+    }
+    
+    // Si es solo número, convertir a rem
+    const num = parseFloat(claseNum);
+    if (!isNaN(num)) {
+        // LIMITAR: máximo 3 dígitos para valores sin unidad
+        if (claseNum.length > 3) {
+            console.warn(`⚠️ ${tipo}-${claseNum}: Valor muy grande sin unidad`);
+            return null;
+        }
+        
+        // LIMITAR: máximo valor razonable
+        if (num > 96) {
+            console.warn(`⚠️ ${tipo}-${claseNum}: Valor numérico muy grande`);
+            return (96 * 0.25) + 'rem'; // Limitar a 24rem
+        }
+        
+        return (num * 0.25) + 'rem';
+    }
+    
+    return null;
+}
+
+
+function generarCSSParaClaseCompleja(claseCompleta, tipo) {
+    const cacheKey = `compleja_${claseCompleta}`;
+    
+    if (CACHE.cssGenerado.has(cacheKey)) {
+        return CACHE.cssGenerado.get(cacheKey);
+    }
+    
+    const cssComplejo = CONFIG.clasesComplejas[tipo];
+    if (!cssComplejo) {
+        return null;
+    }
+    
+    let css = cssComplejo;
+    
+    // Si no empieza con el selector, agregarlo
+    if (!css.trim().startsWith('.')) {
+        const selector = `.${claseCompleta.replace(/\./g, '\\.')}`;
+        css = `${selector} { ${css}`;
+    }
+    
+    CACHE.cssGenerado.set(cacheKey, css);
+    return css;
+}
+
+// FUNCIÓN PARA VALIDAR VALORES
+function esValorValidoParaTipo(valor, tipo) {
+    if (valor === '') {
+        const clasesSinValor = ['flex', 'grid', 'wrap', 'nowrap', 'block', 'inline', 
+                               'inline-block', 'hidden', 'w-responsive'];
+        return clasesSinValor.includes(tipo);
+    }
+    
+    // Para w-responsive no debe tener valor
+    if (tipo === 'w-responsive') {
+        return false;
+    }
+    
+    // Z-INDEX: permite cualquier número entero
+    if (tipo === 'z') {
+        return /^-?\d+$/.test(valor);
+    }
+    
+    // FRACCIONES: para width/height/size
+    if (['w', 'min-w', 'max-w', 'h', 'min-h', 'max-h', 'size'].includes(tipo)) {
+        // Valores especiales
+        const valoresEspeciales = ['auto', 'full', 'screen', 'min', 'max', 'fit'];
+        if (valoresEspeciales.includes(valor)) return true;
+        
+        // Fracciones (1/2, 2/3, etc.)
+        if (valor.includes('/')) {
+            const partes = valor.split('/');
+            if (partes.length !== 2) return false;
+            
+            const num = parseFloat(partes[0]);
+            const den = parseFloat(partes[1]);
+            return !isNaN(num) && !isNaN(den) && den !== 0;
+        }
+        
+        // Valores con unidades o números simples
+        return esValorConUnidadValido(valor, tipo);
+    }
+    
+    // CLASES NUMÉRICAS BÁSICAS
+    const clasesNumericas = ['p', 'px', 'py', 'pt', 'pr', 'pb', 'pl',
+                            'm', 'mx', 'my', 'mt', 'mr', 'mb', 'ml',
+                            'gap', 'gap-x', 'gap-y', 'text', 'border',
+                            'rounded', 'cl', 'span'];
+    
+    if (clasesNumericas.includes(tipo)) {
+        // Para border-radius "full"
+        if (tipo === 'rounded' && valor === 'full') return true;
+        
+        // Para el resto, debe ser número
+        return /^\d+(\.\d+)?$/.test(valor);
+    }
+    
+    // FONT WEIGHT
+    if (tipo === 'font') {
+        const pesos = ['thin', 'light', 'normal', 'medium', 'semibold', 'bold', 'extrabold', 'black'];
+        if (pesos.includes(valor)) return true;
+        if (/^\d+$/.test(valor)) {
+            const num = parseInt(valor);
+            return num >= 100 && num <= 900 && num % 100 === 0;
+        }
+        return false;
+    }
+    
+    // OPACITY
+    if (tipo === 'opacity') {
+        return ['0', '25', '50', '75', '100'].includes(valor);
+    }
+    
+    // OVERFLOW
+    if (['overflow', 'overflow-x', 'overflow-y'].includes(tipo)) {
+        return ['auto', 'hidden', 'visible', 'scroll'].includes(valor);
+    }
+    
+    // CURSOR
+    if (tipo === 'cursor') {
+        return ['pointer', 'default', 'text', 'move', 'not-allowed'].includes(valor);
+    }
+    
+    return true;
+}
+
+// NUEVA FUNCIÓN PARA VALIDAR VALORES CON UNIDADES
+function esValorConUnidadValido(valor, tipo) {
+    // Patrón: número opcionalmente con decimales + unidad opcional
+    const regex = /^(\d+(\.\d+)?)(px|rem|em|%|vw|vh)?$/;
+    
+    if (!regex.test(valor)) {
+        return false;
+    }
+    
+    // Si no tiene unidad, limitar a 3 dígitos
+    if (!valor.match(/[a-z%]/i)) {
+        return valor.length <= 3;
+    }
+    
+    return true;
+}
+
+// FUNCIÓN PARA MANEJAR VALORES ESPECIALES EN VALORTOCSS
+function obtenerValorCSS(tipo, valor, claseCompleta) {
+    // Primero verificar valores especiales completos
+    if (CONFIG.valoresEspeciales[claseCompleta]) {
+        return CONFIG.valoresEspeciales[claseCompleta];
+    }
+    
+    // Llamar a la función principal de conversión
+    return CONFIG.valorToCSS(valor, tipo, claseCompleta);
+}
+
+// FUNCIÓN MEJORADA PARA PARSEAR CLASES
 function parsearClase(claseCompleta) {
-    // Verificar caché primero
     if (CACHE.parsedClases.has(claseCompleta)) {
         return CACHE.parsedClases.get(claseCompleta);
     }
@@ -170,96 +585,147 @@ function parsearClase(claseCompleta) {
     let valor = '';
     let esResponsive = false;
     let breakpointPrefijo = '';
+    let claseParaParsear = claseCompleta;
+    let advertencia = '';
     
-    // Verificar si es clase responsive
+    // Manejar responsive
     if (claseCompleta.includes(':')) {
         esResponsive = true;
         const partes = claseCompleta.split(':');
         breakpointPrefijo = partes[0];
-        claseCompleta = partes[1];
+        claseParaParsear = partes[1];
     }
     
-    // Primero verificar si es una clase sin guión
-    if (CONFIG.clasesMap[claseCompleta]) {
-        tipo = claseCompleta;
+    // ESTRATEGIA DE MATCHING
+    if (CONFIG.clasesMap[claseParaParsear]) {
+        tipo = claseParaParsear;
         valor = '';
-    } 
-    // Si tiene guión
-    else if (claseCompleta.includes('-')) {
-        const partes = claseCompleta.split('-');
+    } else {
+        const prefijos = Object.keys(CONFIG.clasesMap);
+        prefijos.sort((a, b) => b.length - a.length);
         
-        // Probar combinaciones desde la más larga a la más corta
-        for (let i = partes.length; i > 0; i--) {
-            const posibleTipo = partes.slice(0, i).join('-');
-            if (CONFIG.clasesMap[posibleTipo]) {
-                tipo = posibleTipo;
-                valor = partes.slice(i).join('-');
+        for (const prefijo of prefijos) {
+            if (claseParaParsear.startsWith(prefijo + '-')) {
+                tipo = prefijo;
+                valor = claseParaParsear.substring(prefijo.length + 1);
+                
+                // Validación con mensajes de error
+                if (!esValorValidoParaTipo(valor, tipo)) {
+                    advertencia = `Valor "${valor}" no válido para ${tipo}`;
+                    
+                    // Para width/height con valores grandes sin unidad, sugerir unidad
+                    if (['w', 'h', 'min-w', 'max-w', 'min-h', 'max-h'].includes(tipo) && 
+                        /^\d{4,}$/.test(valor)) {
+                        advertencia += `. Usa ${tipo}-${valor}px o ${tipo}-${valor/16}rem`;
+                    }
+                    
+                    tipo = null;
+                    valor = '';
+                    continue;
+                }
+                
                 break;
             }
         }
     }
     
-    const resultado = tipo && CONFIG.clasesMap[tipo] ? {
+    const esValida = tipo !== null && CONFIG.clasesMap[tipo];
+    const resultado = {
         tipo,
         valor,
         esResponsive,
         breakpointPrefijo,
-        claseOriginal: claseCompleta,
-        esValida: true
-    } : {
-        tipo: null,
-        valor: '',
-        esResponsive,
-        breakpointPrefijo,
-        claseOriginal: claseCompleta,
-        esValida: false
+        claseOriginal: claseParaParsear,
+        esValida,
+        advertencia
     };
     
-    // Guardar en caché
     CACHE.parsedClases.set(claseCompleta, resultado);
     return resultado;
 }
 
-// FUNCIÓN OPTIMIZADA PARA GENERAR CSS CON CACHÉ
+// FUNCIÓN MEJORADA PARA DETECTAR CLASES DE UTILIDAD
+function esClaseUtilidad(claseCompleta) {
+    // 1. Coincidencia exacta
+    if (CONFIG.clasesMap[claseCompleta]) {
+        return true;
+    }
+    
+    // 2. Coincidencia con prefijo + guión + valor válido
+    const prefijos = Object.keys(CONFIG.clasesMap);
+    
+    for (const prefijo of prefijos) {
+        if (claseCompleta.startsWith(prefijo + '-')) {
+            const valor = claseCompleta.substring(prefijo.length + 1);
+            
+            // Verificar que el valor sea válido para este tipo
+            return esValorValidoParaTipo(valor, prefijo);
+        }
+    }
+    
+    return false;
+}
+
+// FUNCIÓN PARA FILTRAR CLASES VÁLIDAS
+function filtrarClasesUtiles(clasesUnicas) {
+    const clasesBase = [];
+    const clasesResponsive = [];
+    
+    clasesUnicas.forEach(claseCompleta => {
+        // Verificar si es responsive
+        if (claseCompleta.includes(':')) {
+            // Parsear para ver si es válida
+            const parsed = parsearClase(claseCompleta);
+            if (parsed.esValida) {
+                clasesResponsive.push(claseCompleta);
+            }
+        } else {
+            // Para clases base, usar la función mejorada
+            if (esClaseUtilidad(claseCompleta)) {
+                clasesBase.push(claseCompleta);
+            }
+        }
+    });
+    
+    return { clasesBase, clasesResponsive };
+}
+
+// FUNCIÓN PARA GENERAR CSS PARA UNA CLASE
 function generarCSSParaClase(claseCompleta) {
     const cacheKey = claseCompleta;
     
-    // Verificar si ya generamos este CSS
     if (CACHE.cssGenerado.has(cacheKey)) {
         return CACHE.cssGenerado.get(cacheKey);
     }
     
-    let tipo, valor, breakpointPrefijo;
-    let claseSinBreakpoint = claseCompleta;
-    let esResponsive = false;
-    
-    // Verificar si es clase responsive
-    if (claseCompleta.includes(':')) {
-        esResponsive = true;
-        const partes = claseCompleta.split(':');
-        breakpointPrefijo = partes[0];
-        claseSinBreakpoint = partes[1];
-    }
-    
-    // Parsear la clase (usando caché)
     const parsed = parsearClase(claseCompleta);
     if (!parsed.esValida) {
         return null;
     }
     
-    tipo = parsed.tipo;
-    valor = parsed.valor;
+    const { tipo, valor, esResponsive } = parsed;
+    
+    // VERIFICAR SI ES UNA CLASE COMPLEJA (como w-responsive)
+    if (CONFIG.clasesComplejas[tipo]) {
+        return generarCSSParaClaseCompleja(claseCompleta, tipo);
+    }
     
     // Obtener propiedades y valores
     const propiedad = CONFIG.clasesMap[tipo];
-    const valorCSS = CONFIG.valorToCSS(valor, tipo, claseSinBreakpoint);
+    const valorCSS = CONFIG.valorToCSS(valor, tipo, claseCompleta);
+    
+    // Si es null y es clase compleja, ya se manejó arriba
+    if (valorCSS === null) {
+        return null;
+    }
     
     // Crear selector
     let selector;
     if (esResponsive) {
-        selector = `.${breakpointPrefijo}\\:${claseSinBreakpoint.replace('.', '\\.').replace(':', '\\:')}`;
+        const claseEscapada = claseCompleta.replace(/:/g, '\\:').replace(/\./g, '\\.');
+        selector = `.${claseEscapada}`;
     } else {
-        selector = `.${claseCompleta.replace('.', '\\.')}`;
+        selector = `.${claseCompleta.replace(/\./g, '\\.')}`;
     }
     
     // Generar CSS
@@ -282,9 +748,9 @@ function generarCSSParaClase(claseCompleta) {
     return reglaCSS;
 }
 
-// FUNCIÓN PRINCIPAL OPTIMIZADA CON CACHÉ
+// FUNCIÓN PRINCIPAL CORREGIDA
 function generarClasesUsadas() {
-    // 1. Buscar TODAS las clases usadas en el DOM
+    // 1. Buscar TODAS las clases
     const todasClases = [];
     document.querySelectorAll('*').forEach(elemento => {
         const claseAttr = elemento.getAttribute('class');
@@ -300,24 +766,27 @@ function generarClasesUsadas() {
     // 2. Filtrar clases únicas
     const clasesUnicas = [...new Set(todasClases)];
     
-    // 3. Separar clases base de clases responsive
+    // 3. Filtrar SOLO clases de utilidad válidas
     const clasesBase = [];
     const clasesResponsive = [];
     
     clasesUnicas.forEach(claseCompleta => {
         if (claseCompleta.includes(':')) {
-            clasesResponsive.push(claseCompleta);
+            // Para responsive, parsear para ver si es válida
+            const parsed = parsearClase(claseCompleta);
+            if (parsed.esValida) {
+                clasesResponsive.push(claseCompleta);
+            }
         } else {
-            const esClaseUtilidad = Object.keys(CONFIG.clasesMap).some(prefijo => 
-                claseCompleta === prefijo || claseCompleta.startsWith(prefijo + '-')
-            );
-            if (esClaseUtilidad) {
+            // Para clases base, verificar si es utilidad
+            const parsed = parsearClase(claseCompleta);
+            if (parsed.esValida) {
                 clasesBase.push(claseCompleta);
             }
         }
     });
     
-    // 4. Generar CSS para clases BASE con caché
+    // 4. Generar CSS para clases BASE
     let cssBase = '';
     const clasesBaseProcesadas = new Set();
     
@@ -329,7 +798,7 @@ function generarClasesUsadas() {
         }
     });
     
-    // 5. Generar CSS para clases RESPONSIVE con caché
+    // 5. Generar CSS para clases RESPONSIVE
     let cssResponsive = '';
     const reglasPorBreakpoint = {};
     
@@ -348,7 +817,7 @@ function generarClasesUsadas() {
         reglasPorBreakpoint[breakpoint.query].add(css);
     });
     
-    // Construir media queries
+    // 6. Construir media queries
     Object.entries(reglasPorBreakpoint).forEach(([query, reglas]) => {
         cssResponsive += `@media (${query}) {\n`;
         reglas.forEach(regla => {
@@ -357,10 +826,10 @@ function generarClasesUsadas() {
         cssResponsive += `}\n`;
     });
     
-    // 6. Combinar todo el CSS
+    // 7. Combinar CSS
     const cssFinal = cssBase + (cssResponsive ? '\n' + cssResponsive : '');
     
-    // 7. Inyectar al DOM (solo si cambió)
+    // 8. Inyectar al DOM
     const estiloId = 'clases-generadas';
     let estilo = document.getElementById(estiloId);
     
@@ -370,7 +839,6 @@ function generarClasesUsadas() {
         document.head.appendChild(estilo);
     }
     
-    // Solo actualizar si hay cambios
     if (estilo.textContent !== cssFinal) {
         estilo.textContent = cssFinal;
     }
@@ -378,7 +846,7 @@ function generarClasesUsadas() {
     return cssFinal;
 }
 
-// OBSERVADOR CON DEBOUNCE (optimización adicional)
+// OBSERVADOR CON DEBOUNCE
 let debounceTimeout;
 function ejecutarConDebounce() {
     if (debounceTimeout) clearTimeout(debounceTimeout);
@@ -398,7 +866,7 @@ document.addEventListener('DOMContentLoaded', function() {
         subtree: true 
     });
     
-    // API simple para debugging
+    // API para debugging
     window.utilityCSS = {
         regenerar: function() {
             CACHE.limpiar();
@@ -409,6 +877,76 @@ document.addEventListener('DOMContentLoaded', function() {
                 cssCache: CACHE.cssGenerado.size,
                 parsedCache: CACHE.parsedClases.size
             };
+        },
+        probarClase: function(clase) {
+            console.log(`\n🔍 PROBANDO CLASE: "${clase}"`);
+            
+            // Parsear
+            const parsed = parsearClase(clase);
+            console.log('📋 Parsed:', parsed);
+            
+            if (parsed.advertencia) {
+                console.warn(`⚠️ ${parsed.advertencia}`);
+            }
+            
+            if (!parsed.esValida) {
+                console.log('❌ Clase inválida o no reconocida');
+                return { valida: false, parsed };
+            }
+            
+            // Generar CSS
+            const css = generarCSSParaClase(clase);
+            console.log('🎨 CSS generado:', css || 'null');
+            
+            // Debug específico para fracciones
+            if (clase.includes('/')) {
+                console.log('🔢 Fracción detectada');
+                console.log('Tipo:', parsed.tipo);
+                console.log('Valor:', parsed.valor);
+                
+                // Probar conversión directamente
+                const valorConvertido = convertirValorDimension(parsed.valor, parsed.tipo);
+                console.log('Valor convertido:', valorConvertido);
+            }
+            
+            return { valida: true, parsed, css };
+        },
+        probarConversion: function(valor, tipo) {
+            console.log(`\n🧪 Probando conversión: ${tipo}-${valor}`);
+            
+            // Probar función convertirValorDimension
+            if (['w', 'h', 'min-w', 'max-w', 'min-h', 'max-h', 'size'].includes(tipo)) {
+                const resultado = convertirValorDimension(valor, tipo);
+                console.log('convertirValorDimension →', resultado);
+            }
+            
+            // Probar función valorToCSS
+            const resultado = CONFIG.valorToCSS(valor, tipo, `${tipo}-${valor}`);
+            console.log('CONFIG.valorToCSS →', resultado);
+            
+            return resultado;
+        },
+        listaEjemplos: function() {
+            const ejemplos = [
+                { clase: 'z-999', esperado: 'z-index: 999' },
+                { clase: 'z-50', esperado: 'z-index: 50' },
+                { clase: 'w-1/2', esperado: 'width: 50%' },
+                { clase: 'w-64', esperado: 'width: 16rem' },
+                { clase: 'w-full', esperado: 'width: 100%' },
+                { clase: 'w-100px', esperado: 'width: 100px' },
+                { clase: 'h-1/4', esperado: 'height: 25%' },
+                { clase: 'p-4', esperado: 'padding: 1em' },
+                { clase: 'm-2', esperado: 'margin: 0.5em' },
+                { clase: 'text-16', esperado: 'font-size: 4rem' },
+                { clase: 'font-bold', esperado: 'font-weight: 700' },
+                { clase: 'rounded-full', esperado: 'border-radius: 9999px' }
+            ];
+            
+            console.log('📚 EJEMPLOS DE PRUEBA:');
+            ejemplos.forEach(ej => {
+                console.log(`\n${ej.clase}:`);
+                this.probarClase(ej.clase);
+            });
         }
     };
 });
